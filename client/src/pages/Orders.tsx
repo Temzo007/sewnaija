@@ -60,11 +60,11 @@ export default function Orders() {
                     <div className="flex justify-between items-start">
                       <h3 className="font-semibold text-base">{customer?.name || 'Unknown'}</h3>
                       {order.status === 'pending' ? (
-                        <Badge variant="outline" className="text-orange-600 border-orange-200 bg-orange-50 text-[10px]">
+                        <Badge variant="outline" className="text-orange-600 border-orange-200 bg-orange-50 dark:bg-orange-900/30 dark:text-orange-400 dark:border-orange-800 text-[10px]">
                           Pending
                         </Badge>
                       ) : (
-                         <Badge variant="outline" className="text-green-600 border-green-200 bg-green-50 text-[10px]">
+                         <Badge variant="outline" className="text-green-600 border-green-200 bg-green-50 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800 text-[10px]">
                           Completed
                         </Badge>
                       )}

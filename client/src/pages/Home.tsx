@@ -116,8 +116,12 @@ export default function Home() {
                               className="flex items-center gap-3 p-2 rounded-lg hover:bg-accent/50 cursor-pointer transition-colors"
                               onClick={() => setLocation(`/customers/${c.id}`)}
                             >
-                              <div className="w-8 h-8 rounded-full bg-secondary text-secondary-foreground flex items-center justify-center text-xs font-bold">
-                                {c.name.charAt(0)}
+                              <div className="w-8 h-8 rounded-full bg-secondary text-secondary-foreground flex items-center justify-center text-xs font-bold overflow-hidden">
+                                {c.photo ? (
+                                  <img src={c.photo} alt={c.name} className="w-full h-full object-cover" />
+                                ) : (
+                                  c.name.charAt(0)
+                                )}
                               </div>
                               <div className="flex-1 min-w-0">
                                 <div className="text-sm font-medium truncate">{c.name}</div>
