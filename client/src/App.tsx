@@ -49,12 +49,21 @@ function Router() {
   );
 }
 
+import Splash from "@/pages/Splash";
+import { useState } from "react";
+
 function App() {
+  const [showSplash, setShowSplash] = useState(true);
+
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
-        <Router />
+        {showSplash ? (
+          <Splash onComplete={() => setShowSplash(false)} />
+        ) : (
+          <Router />
+        )}
       </TooltipProvider>
     </QueryClientProvider>
   );

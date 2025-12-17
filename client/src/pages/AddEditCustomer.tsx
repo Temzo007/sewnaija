@@ -170,16 +170,18 @@ export default function AddEditCustomer() {
             </Dialog>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-3">
             {fields.map((field, index) => (
               <div key={field.id} className="space-y-1 relative group">
-                <Label htmlFor={`measurements.${index}.value`} className="text-xs uppercase text-muted-foreground truncate block pr-4">
+                <Label htmlFor={`measurements.${index}.value`} className="text-[10px] uppercase text-muted-foreground truncate block pr-2">
                   {field.name}
                 </Label>
                 <Input 
                   {...register(`measurements.${index}.value`)} 
                   placeholder="0.0" 
-                  className="bg-card font-mono"
+                  type="number"
+                  inputMode="decimal"
+                  className="bg-card font-mono text-center px-1"
                 />
                 <input type="hidden" {...register(`measurements.${index}.name`)} value={field.name} />
                 
@@ -188,10 +190,10 @@ export default function AddEditCustomer() {
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="absolute -top-1 -right-2 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="absolute -top-2 -right-2 h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity z-10 bg-destructive/10 hover:bg-destructive/20 text-destructive rounded-full"
                   onClick={() => remove(index)}
                 >
-                  <Trash2 className="w-3 h-3 text-destructive" />
+                  <Trash2 className="w-3 h-3" />
                 </Button>
               </div>
             ))}

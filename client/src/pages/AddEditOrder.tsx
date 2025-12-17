@@ -268,15 +268,35 @@ export default function AddEditOrder() {
           </div>
           
           <div className="space-y-3">
-            {fields.map((field, index) => (
-              <div key={field.id} className="flex gap-2 items-center">
-                 <Input {...register(`customMeasurements.${index}.name`)} placeholder="Name (e.g. Sleeve)" className="h-10 bg-card" />
-                 <Input {...register(`customMeasurements.${index}.value`)} placeholder="Value" className="h-10 bg-card font-mono" />
-                 <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)}>
-                   <Trash2 className="w-4 h-4 text-destructive" />
-                 </Button>
-              </div>
-            ))}
+            <div className="grid grid-cols-3 gap-3">
+              {fields.map((field, index) => (
+                <div key={field.id} className="space-y-1 relative group">
+                  <Input 
+                    {...register(`customMeasurements.${index}.name`)} 
+                    placeholder="Label" 
+                    className="h-7 text-xs bg-muted/50 border-none mb-1 text-center px-1" 
+                  />
+                  <div className="relative">
+                    <Input 
+                      {...register(`customMeasurements.${index}.value`)} 
+                      placeholder="0.0" 
+                      type="number"
+                      inputMode="decimal"
+                      className="h-10 bg-card font-mono text-center px-1" 
+                    />
+                    <Button 
+                      type="button" 
+                      variant="ghost" 
+                      size="icon" 
+                      className="absolute -top-1 -right-1 h-5 w-5 bg-destructive/10 hover:bg-destructive/20 text-destructive rounded-full opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                      onClick={() => remove(index)}
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 
