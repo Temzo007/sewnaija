@@ -5,7 +5,9 @@ const STORAGE_KEYS = {
   CUSTOMERS: 'sewnaija_customers',
   ORDERS: 'sewnaija_orders',
   GALLERY: 'sewnaija_gallery',
-  THEME: 'sewnaija_theme'
+  THEME: 'sewnaija_theme',
+  DEFAULT_MEASUREMENTS: 'sewnaija_default_measurements',
+  SETUP_COMPLETE: 'sewnaija_setup_complete'
 };
 
 // Helper to simulate async delay for "realism"
@@ -154,6 +156,23 @@ class TinyDB {
     } else {
       document.documentElement.classList.remove('dark');
     }
+  }
+
+  // --- Setup & Default Measurements ---
+  isSetupComplete(): boolean {
+    return this.get<boolean>(STORAGE_KEYS.SETUP_COMPLETE, false);
+  }
+
+  setSetupComplete(complete: boolean): void {
+    this.set(STORAGE_KEYS.SETUP_COMPLETE, complete);
+  }
+
+  getDefaultMeasurements(): { name: string; value: string }[] {
+    return this.get(STORAGE_KEYS.DEFAULT_MEASUREMENTS, DEFAULT_MEASUREMENTS);
+  }
+
+  setDefaultMeasurements(measurements: { name: string; value: string }[]): void {
+    this.set(STORAGE_KEYS.DEFAULT_MEASUREMENTS, measurements);
   }
 }
 

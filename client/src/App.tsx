@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 
+import WelcomeSetup from "@/pages/WelcomeSetup";
 import Home from "@/pages/Home";
 import Customers from "@/pages/Customers";
 import CustomerDetails from "@/pages/CustomerDetails";
@@ -13,10 +14,22 @@ import Orders from "@/pages/Orders";
 import OrderDetails from "@/pages/OrderDetails";
 import AddEditOrder from "@/pages/AddEditOrder";
 import Gallery from "@/pages/Gallery";
+import { db } from "@/lib/db";
+import { useLocation } from "wouter";
+import { useEffect } from "react";
 
 function Router() {
+  const [location, setLocation] = useLocation();
+
+  useEffect(() => {
+    if (!db.isSetupComplete() && location !== "/setup") {
+      setLocation("/setup");
+    }
+  }, [location, setLocation]);
+
   return (
     <Switch>
+      <Route path="/setup" component={WelcomeSetup} />
       <Route path="/" component={Home} />
       
       <Route path="/customers" component={Customers} />

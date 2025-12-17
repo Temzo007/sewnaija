@@ -26,7 +26,7 @@ const schema = z.object({
   deadline: z.date({ required_error: "Deadline is required" }),
   customMeasurements: z.array(z.object({
     name: z.string().min(1),
-    value: z.string().min(1)
+    value: z.string()
   }))
 });
 

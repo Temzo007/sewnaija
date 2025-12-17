@@ -21,7 +21,7 @@ const schema = z.object({
   description: z.string().optional(),
   measurements: z.array(z.object({
     name: z.string().min(1),
-    value: z.string().min(1, "Value required") // Allow string for "34 inches" etc
+    value: z.string() // Allow empty string
   }))
 });
 
@@ -41,11 +41,11 @@ export default function AddEditCustomer() {
   const { register, handleSubmit, control, setValue, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
-      measurements: DEFAULT_MEASUREMENTS
+      measurements: [] // Will load from DB
     }
   });
 
-  const { fields, append, remove } = useFieldArray({
+  const { fields, append, remove, replace } = useFieldArray({
     control,
     name: "measurements"
   });
@@ -61,8 +61,12 @@ export default function AddEditCustomer() {
           setPhoto(customer.photo);
         }
       });
+    } else {
+      // Load defaults from DB for new customers
+      const defaults = db.getDefaultMeasurements();
+      replace(defaults);
     }
-  }, [isEdit, params?.id, setValue]);
+  }, [isEdit, params?.id, setValue, replace]);
 
   const onSubmit = async (data: FormData) => {
     try {

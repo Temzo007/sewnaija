@@ -142,10 +142,10 @@ export default function Orders() {
       <div className="p-4 max-w-4xl mx-auto pb-20">
         <Tabs defaultValue="pending" className="w-full">
           <TabsList className="grid w-full grid-cols-2 h-12 rounded-xl bg-muted/50 p-1">
-            <TabsTrigger value="pending" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">
+            <TabsTrigger value="pending" className="rounded-lg data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all">
               Pending <Badge className="ml-2 bg-primary/10 text-primary hover:bg-primary/20 shadow-none border-none">{pendingOrders.length}</Badge>
             </TabsTrigger>
-            <TabsTrigger value="completed" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">
+            <TabsTrigger value="completed" className="rounded-lg data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all">
               Completed <Badge className="ml-2 bg-muted-foreground/10 text-muted-foreground hover:bg-muted-foreground/20 shadow-none border-none">{completedOrders.length}</Badge>
             </TabsTrigger>
           </TabsList>

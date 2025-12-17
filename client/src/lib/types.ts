@@ -59,3 +59,5 @@ export const DEFAULT_MEASUREMENTS = [
   { name: 'Sleeve Length', value: '' },
   { name: 'Full Length', value: '' },
 ];
+
+export const INITIAL_DEFAULT_MEASUREMENTS = DEFAULT_MEASUREMENTS;
