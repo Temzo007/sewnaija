@@ -16,7 +16,11 @@ import AddEditOrder from "@/pages/AddEditOrder";
 import Gallery from "@/pages/Gallery";
 import { db } from "@/lib/db";
 import { useLocation } from "wouter";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import Splash from "@/pages/Splash";
+import InstallApp from "@/pages/InstallApp";
+
+type AppState = 'install' | 'splash' | 'app';
 
 function Router() {
   const [location, setLocation] = useLocation();
@@ -49,19 +53,47 @@ function Router() {
   );
 }
 
-import Splash from "@/pages/Splash";
-import { useState } from "react";
-
 function App() {
-  const [showSplash, setShowSplash] = useState(true);
+  const [appState, setAppState] = useState<AppState>(() => {
+    // Check if running as installed PWA (standalone mode)
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches 
+      || (window.navigator as any).standalone === true;
+    
+    // Check if user has already seen install page this session
+    const hasSeenInstall = sessionStorage.getItem('sewnaija_seen_install') === 'true';
+    
+    if (isStandalone) {
+      // Running as installed app - show splash
+      return 'splash';
+    } else if (hasSeenInstall) {
+      // Already seen install page in browser - show splash
+      return 'splash';
+    } else {
+      // First visit in browser - show install page
+      return 'install';
+    }
+  });
+
+  const handleInstalled = () => {
+    sessionStorage.setItem('sewnaija_seen_install', 'true');
+    setAppState('splash');
+  };
+
+  const handleSplashComplete = () => {
+    setAppState('app');
+  };
 
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
-        {showSplash ? (
-          <Splash onComplete={() => setShowSplash(false)} />
-        ) : (
+        {appState === 'install' && (
+          <InstallApp onInstalled={handleInstalled} />
+        )}
+        {appState === 'splash' && (
+          <Splash onComplete={handleSplashComplete} />
+        )}
+        {appState === 'app' && (
           <Router />
         )}
       </TooltipProvider>
