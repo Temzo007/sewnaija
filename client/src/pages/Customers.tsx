@@ -59,7 +59,7 @@ export default function Customers() {
                   <CardContent className="p-0">
                     <div className="flex items-center p-4 gap-4">
                       {/* Avatar */}
-                      <Avatar className="w-14 h-14 border-2 border-background shadow-sm">
+                      <Avatar className="w-14 h-14 border-2 border-background shadow-sm cursor-pointer" onClick={() => setLocation(`/customers/${customer.id}`)}>
                         <AvatarImage src={customer.photo} className="object-cover" />
                         <AvatarFallback className="bg-secondary text-secondary-foreground font-bold text-lg">
                           {customer.name.charAt(0)}

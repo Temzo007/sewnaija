@@ -221,9 +221,12 @@ export default function Home() {
                 return (
                   <Card key={order.id} className="border-none shadow-sm overflow-hidden" data-testid={`order-card-${order.id}`}>
                     <CardContent className="p-0">
-                      <div className="flex items-center p-4 gap-4">
+                      <div className="flex items-center p-4 gap-4 cursor-pointer" onClick={() => setLocation(`/orders/${order.id}`)}>
                         {/* Avatar */}
-                        <div className="w-12 h-12 rounded-full bg-muted overflow-hidden flex-shrink-0">
+                        <div className="w-12 h-12 rounded-full bg-muted overflow-hidden flex-shrink-0 cursor-pointer" onClick={(e) => {
+                          e.stopPropagation();
+                          setLocation(`/customers/${customer?.id}`);
+                        }}>
                           {customer?.photo ? (
                             <img src={customer.photo} alt={customer.name} className="w-full h-full object-cover" />
                           ) : (
@@ -242,7 +245,7 @@ export default function Home() {
 
                         {/* Actions */}
                         <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
+                          <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
                             <Button variant="ghost" size="icon" className="h-8 w-8">
                               <MoreVertical className="w-4 h-4" />
                             </Button>

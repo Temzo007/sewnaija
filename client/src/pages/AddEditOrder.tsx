@@ -9,7 +9,7 @@ import { db } from "@/lib/db";
 import { useLocation, useRoute } from "wouter";
 import { ArrowLeft, Camera, Plus, Trash2, Calendar as CalendarIcon, Image as ImageIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Customer } from "@/lib/types";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
@@ -18,6 +18,7 @@ import { format } from "date-fns";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Check } from "lucide-react";
 import { queryClient } from "@/lib/queryClient";
+import { Dialog, DialogContent, DialogTrigger, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 const schema = z.object({
   description: z.string().min(1, "Description is required"),
@@ -43,6 +44,10 @@ export default function AddEditOrder() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [materials, setMaterials] = useState<string[]>([]);
   const [styles, setStyles] = useState<string[]>([]);
+  const [showImageSourceModal, setShowImageSourceModal] = useState<'material' | 'style' | null>(null);
+  
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const currentImageType = useRef<'material' | 'style'>('material');
   
   // Combobox state
   const [openCombobox, setOpenCombobox] = useState(false);
@@ -99,8 +104,6 @@ export default function AddEditOrder() {
       }
       queryClient.invalidateQueries({ queryKey: ['orders'] });
       
-      // If we came from a specific customer details page, maybe go back there? 
-      // Default: go back to history which might be Home or Customers or Details.
       window.history.back();
     } catch (e) {
       toast({ title: "Error", description: "Failed to save order", variant: "destructive" });
@@ -119,11 +122,25 @@ export default function AddEditOrder() {
         reader.readAsDataURL(file);
       });
     }
+    setShowImageSourceModal(null);
   };
 
   const removeImage = (index: number, type: 'material' | 'style') => {
     if (type === 'material') setMaterials(prev => prev.filter((_, i) => i !== index));
     else setStyles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleImageSourceSelection = (source: 'camera' | 'phone' | 'app') => {
+    if (source === 'app' && showImageSourceModal === 'style') {
+      // For app gallery - you'd integrate with your gallery here
+      // For now, just use file input
+      currentImageType.current = 'style';
+      fileInputRef.current?.click();
+    } else {
+      // For camera and phone gallery - use file input (works for both)
+      currentImageType.current = showImageSourceModal || 'material';
+      fileInputRef.current?.click();
+    }
   };
 
   return (
@@ -217,10 +234,26 @@ export default function AddEditOrder() {
            <div className="space-y-2">
              <div className="flex items-center justify-between">
                <span className="text-sm text-muted-foreground">Materials / Fabrics</span>
-               <label className="cursor-pointer text-primary text-sm font-medium hover:underline flex items-center">
-                 <Camera className="w-4 h-4 mr-1" /> Add Photo
-                 <input type="file" accept="image/*" multiple className="hidden" onChange={(e) => handleImageUpload(e, 'material')} />
-               </label>
+               <Dialog open={showImageSourceModal === 'material'} onOpenChange={(open) => setShowImageSourceModal(open ? 'material' : null)}>
+                 <DialogTrigger asChild>
+                   <button className="cursor-pointer text-primary text-sm font-medium hover:underline flex items-center">
+                     <Camera className="w-4 h-4 mr-1" /> Add Photo
+                   </button>
+                 </DialogTrigger>
+                 <DialogContent className="w-80">
+                   <DialogHeader>
+                     <DialogTitle>Add Material Photo</DialogTitle>
+                   </DialogHeader>
+                   <div className="space-y-2">
+                     <Button variant="outline" className="w-full h-12 gap-2" onClick={() => handleImageSourceSelection('camera')}>
+                       <Camera className="w-4 h-4" /> Camera
+                     </Button>
+                     <Button variant="outline" className="w-full h-12 gap-2" onClick={() => handleImageSourceSelection('phone')}>
+                       <ImageIcon className="w-4 h-4" /> Phone Gallery
+                     </Button>
+                   </div>
+                 </DialogContent>
+               </Dialog>
              </div>
              <div className="flex gap-2 overflow-x-auto pb-2">
                {materials.map((src, idx) => (
@@ -239,10 +272,29 @@ export default function AddEditOrder() {
            <div className="space-y-2">
              <div className="flex items-center justify-between">
                <span className="text-sm text-muted-foreground">Style Inspirations</span>
-               <label className="cursor-pointer text-primary text-sm font-medium hover:underline flex items-center">
-                 <ImageIcon className="w-4 h-4 mr-1" /> Add Image
-                 <input type="file" accept="image/*" multiple className="hidden" onChange={(e) => handleImageUpload(e, 'style')} />
-               </label>
+               <Dialog open={showImageSourceModal === 'style'} onOpenChange={(open) => setShowImageSourceModal(open ? 'style' : null)}>
+                 <DialogTrigger asChild>
+                   <button className="cursor-pointer text-primary text-sm font-medium hover:underline flex items-center">
+                     <ImageIcon className="w-4 h-4 mr-1" /> Add Image
+                   </button>
+                 </DialogTrigger>
+                 <DialogContent className="w-80">
+                   <DialogHeader>
+                     <DialogTitle>Add Style Image</DialogTitle>
+                   </DialogHeader>
+                   <div className="space-y-2">
+                     <Button variant="outline" className="w-full h-12 gap-2" onClick={() => handleImageSourceSelection('app')}>
+                       <ImageIcon className="w-4 h-4" /> App Gallery
+                     </Button>
+                     <Button variant="outline" className="w-full h-12 gap-2" onClick={() => handleImageSourceSelection('phone')}>
+                       <ImageIcon className="w-4 h-4" /> Phone Gallery
+                     </Button>
+                     <Button variant="outline" className="w-full h-12 gap-2" onClick={() => handleImageSourceSelection('camera')}>
+                       <Camera className="w-4 h-4" /> Camera
+                     </Button>
+                   </div>
+                 </DialogContent>
+               </Dialog>
              </div>
              <div className="flex gap-2 overflow-x-auto pb-2">
                {styles.map((src, idx) => (
@@ -257,6 +309,16 @@ export default function AddEditOrder() {
              </div>
            </div>
         </div>
+
+        {/* Hidden file input */}
+        <input 
+          type="file" 
+          accept="image/*" 
+          multiple 
+          className="hidden" 
+          ref={fileInputRef}
+          onChange={(e) => handleImageUpload(e, currentImageType.current)}
+        />
 
         {/* Custom Measurements */}
         <div className="space-y-3 pt-4 border-t">
