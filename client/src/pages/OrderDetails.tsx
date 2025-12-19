@@ -81,16 +81,41 @@ export default function OrderDetails() {
           </CardContent>
         </Card>
 
-        {/* Images */}
+        {/* Materials */}
         <div className="space-y-4">
-          <h3 className="font-heading font-semibold text-lg">Materials & Styles</h3>
+          <h3 className="font-heading font-semibold text-lg">Materials / Fabrics</h3>
           <div className="grid grid-cols-3 gap-3">
-             {[...order.materials, ...order.styles].length === 0 ? (
+             {order.materials.length === 0 ? (
                <div className="col-span-3 py-8 text-center text-muted-foreground bg-muted/20 rounded-lg border border-dashed border-border">
-                 No images attached
+                 No material photos
                </div>
              ) : (
-               [...order.materials, ...order.styles].map((url, i) => (
+               order.materials.map((url, i) => (
+                 <Dialog key={i}>
+                    <DialogTrigger asChild>
+                      <div className="aspect-square rounded-lg bg-muted overflow-hidden cursor-pointer shadow-sm">
+                        <img src={url} className="w-full h-full object-cover hover:scale-105 transition-transform duration-300" />
+                      </div>
+                    </DialogTrigger>
+                    <DialogContent className="p-0 overflow-hidden bg-transparent border-none">
+                      <img src={url} className="w-full h-auto rounded-lg" />
+                    </DialogContent>
+                 </Dialog>
+               ))
+             )}
+          </div>
+        </div>
+
+        {/* Styles */}
+        <div className="space-y-4">
+          <h3 className="font-heading font-semibold text-lg">Style Inspirations</h3>
+          <div className="grid grid-cols-3 gap-3">
+             {order.styles.length === 0 ? (
+               <div className="col-span-3 py-8 text-center text-muted-foreground bg-muted/20 rounded-lg border border-dashed border-border">
+                 No style images
+               </div>
+             ) : (
+               order.styles.map((url, i) => (
                  <Dialog key={i}>
                     <DialogTrigger asChild>
                       <div className="aspect-square rounded-lg bg-muted overflow-hidden cursor-pointer shadow-sm">

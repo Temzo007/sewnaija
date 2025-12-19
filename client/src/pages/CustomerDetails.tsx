@@ -33,12 +33,11 @@ export default function CustomerDetails() {
   return (
     <Layout 
       hideSidebar 
-      title={customer.name}
+      title=""
       actions={
-        <Avatar className="w-8 h-8 border border-background">
-          <AvatarImage src={customer.photo} />
-          <AvatarFallback className="bg-primary text-primary-foreground text-xs font-bold">{customer.name.charAt(0)}</AvatarFallback>
-        </Avatar>
+        <Button variant="ghost" size="sm" onClick={() => setLocation(`/edit-customer/${id}`)}>
+          <Pencil className="w-4 h-4 mr-1" /> Edit
+        </Button>
       }
     >
       <div className="p-4 max-w-3xl mx-auto space-y-6 pb-20">
@@ -46,6 +45,17 @@ export default function CustomerDetails() {
         <Button variant="ghost" className="pl-0 gap-2 hover:bg-transparent" onClick={() => window.history.back()}>
           <ArrowLeft className="w-5 h-5" /> Back
         </Button>
+
+        {/* Customer Header - Name and Photo */}
+        <div className="flex flex-col items-center gap-3 text-center">
+          <Avatar className="w-24 h-24 border-4 border-primary/20">
+            <AvatarImage src={customer.photo} />
+            <AvatarFallback className="bg-primary text-primary-foreground text-3xl font-bold">{customer.name.charAt(0)}</AvatarFallback>
+          </Avatar>
+          <div>
+            <h1 className="text-3xl font-bold font-heading">{customer.name}</h1>
+          </div>
+        </div>
 
         {/* Contact Actions */}
         <div className="grid grid-cols-2 gap-4">
@@ -86,9 +96,6 @@ export default function CustomerDetails() {
               <h3 className="text-lg font-heading font-semibold flex items-center gap-2">
                 <Ruler className="w-4 h-4 text-primary" /> Body Measurements
               </h3>
-              <Button size="sm" variant="outline" onClick={() => setLocation(`/edit-customer/${id}`)}>
-                <Pencil className="w-3 h-3 mr-1" /> Edit
-              </Button>
             </div>
             
             <div className="grid grid-cols-2 gap-3">
