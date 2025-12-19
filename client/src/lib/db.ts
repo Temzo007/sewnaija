@@ -1,10 +1,11 @@
-import { Customer, Order, GalleryItem, Theme, DEFAULT_MEASUREMENTS } from "./types";
+import { Customer, Order, GalleryItem, GalleryAlbum, Theme, DEFAULT_MEASUREMENTS } from "./types";
 import { queryClient } from "./queryClient";
 
 const STORAGE_KEYS = {
   CUSTOMERS: 'sewnaija_customers',
   ORDERS: 'sewnaija_orders',
   GALLERY: 'sewnaija_gallery',
+  GALLERY_ALBUMS: 'sewnaija_gallery_albums',
   THEME: 'sewnaija_theme',
   DEFAULT_MEASUREMENTS: 'sewnaija_default_measurements',
   SETUP_COMPLETE: 'sewnaija_setup_complete'
@@ -125,22 +126,73 @@ class TinyDB {
     this.set(STORAGE_KEYS.ORDERS, orders.filter(o => o.id !== id));
   }
 
+  // --- Gallery Albums ---
+  async getGalleryAlbums(): Promise<GalleryAlbum[]> {
+    await delay();
+    const albums = this.get<GalleryAlbum[]>(STORAGE_KEYS.GALLERY_ALBUMS, []);
+    // Initialize with default albums if empty
+    if (albums.length === 0) {
+      const defaults: GalleryAlbum[] = [
+        { id: 'album-1', name: 'Styles', createdAt: new Date().toISOString() },
+        { id: 'album-2', name: 'Inspirations', createdAt: new Date().toISOString() },
+        { id: 'album-3', name: 'Fabrics', createdAt: new Date().toISOString() }
+      ];
+      this.set(STORAGE_KEYS.GALLERY_ALBUMS, defaults);
+      return defaults;
+    }
+    return albums;
+  }
+
+  async createGalleryAlbum(name: string): Promise<GalleryAlbum> {
+    await delay();
+    const albums = this.get<GalleryAlbum[]>(STORAGE_KEYS.GALLERY_ALBUMS, []);
+    const newAlbum: GalleryAlbum = {
+      id: Date.now().toString(),
+      name,
+      createdAt: new Date().toISOString()
+    };
+    this.set(STORAGE_KEYS.GALLERY_ALBUMS, [newAlbum, ...albums]);
+    return newAlbum;
+  }
+
+  async deleteGalleryAlbum(albumId: string): Promise<void> {
+    await delay();
+    const albums = this.get<GalleryAlbum[]>(STORAGE_KEYS.GALLERY_ALBUMS, []);
+    this.set(STORAGE_KEYS.GALLERY_ALBUMS, albums.filter(a => a.id !== albumId));
+    // Also delete gallery items in this album
+    const gallery = this.get<GalleryItem[]>(STORAGE_KEYS.GALLERY, []);
+    this.set(STORAGE_KEYS.GALLERY, gallery.filter(item => item.albumId !== albumId));
+  }
+
   // --- Gallery ---
   async getGallery(): Promise<GalleryItem[]> {
     await delay();
     return this.get<GalleryItem[]>(STORAGE_KEYS.GALLERY, []);
   }
 
-  async addToGallery(url: string): Promise<GalleryItem> {
+  async getGalleryByAlbum(albumId: string): Promise<GalleryItem[]> {
+    await delay();
+    const gallery = this.get<GalleryItem[]>(STORAGE_KEYS.GALLERY, []);
+    return gallery.filter(item => item.albumId === albumId);
+  }
+
+  async addToGallery(url: string, albumId: string): Promise<GalleryItem> {
     await delay();
     const gallery = this.get<GalleryItem[]>(STORAGE_KEYS.GALLERY, []);
     const newItem: GalleryItem = {
       id: Date.now().toString(),
       url,
+      albumId,
       createdAt: new Date().toISOString()
     };
     this.set(STORAGE_KEYS.GALLERY, [newItem, ...gallery]);
     return newItem;
+  }
+
+  async deleteFromGallery(itemId: string): Promise<void> {
+    await delay();
+    const gallery = this.get<GalleryItem[]>(STORAGE_KEYS.GALLERY, []);
+    this.set(STORAGE_KEYS.GALLERY, gallery.filter(item => item.id !== itemId));
   }
 
   // --- Theme ---

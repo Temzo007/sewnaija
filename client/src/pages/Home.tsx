@@ -167,7 +167,7 @@ export default function Home() {
           )}
         </div>
 
-        {/* Action Cards */}
+        {/* Action Cards - Add New Customer and Add New Order */}
         <div className="grid grid-cols-2 gap-4">
           <Link href="/add-customer">
             <Card className="bg-primary text-primary-foreground border-none shadow-md hover:opacity-90 transition-opacity cursor-pointer">
@@ -180,20 +180,32 @@ export default function Home() {
             </Card>
           </Link>
 
-          <Link href="/orders">
-            <Card className="bg-card text-card-foreground border-none shadow-md hover:bg-accent/50 transition-colors cursor-pointer">
+          <Link href="/add-order">
+            <Card className="bg-primary text-primary-foreground border-none shadow-md hover:opacity-90 transition-opacity cursor-pointer">
               <CardContent className="p-4 flex flex-col items-center justify-center gap-2 text-center h-full min-h-[120px]">
-                <div className="w-10 h-10 rounded-full bg-secondary/20 text-secondary-foreground flex items-center justify-center mb-1">
-                  <Package className="w-5 h-5" />
+                <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center mb-1">
+                  <Plus className="w-5 h-5" />
                 </div>
-                <div className="flex flex-col">
-                  <span className="text-2xl font-bold font-heading">{pendingCount}</span>
-                  <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Pending Orders</span>
-                </div>
+                <span className="font-heading font-semibold text-sm">Add New Order</span>
               </CardContent>
             </Card>
           </Link>
         </div>
+
+        {/* Pending Orders Card */}
+        <Link href="/orders">
+          <Card className="bg-card text-card-foreground border-none shadow-md hover:bg-accent/50 transition-colors cursor-pointer">
+            <CardContent className="p-4 flex flex-col items-center justify-center gap-2 text-center h-full min-h-[120px]">
+              <div className="w-10 h-10 rounded-full bg-secondary/20 text-secondary-foreground flex items-center justify-center mb-1">
+                <Package className="w-5 h-5" />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-2xl font-bold font-heading">{pendingCount}</span>
+                <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Pending Orders</span>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
 
         {/* Recent Orders List */}
         <div className="space-y-4">
@@ -279,14 +291,6 @@ export default function Home() {
             )}
           </div>
         </div>
-
-        {/* Add Order Button */}
-        <Link href="/add-order">
-          <Button className="w-full h-12 rounded-xl text-base shadow-sm" size="lg">
-            <Plus className="w-5 h-5 mr-2" />
-            Add New Order
-          </Button>
-        </Link>
       </div>
     </Layout>
   );
