@@ -68,7 +68,7 @@ export default function OrderDetails() {
         <Card className="bg-card shadow-sm border-none cursor-pointer hover:bg-accent/10" onClick={() => setLocation(`/customers/${customer.id}`)}>
           <CardContent className="p-4 flex items-center gap-4">
              <div className="w-12 h-12 rounded-full bg-muted overflow-hidden flex-shrink-0">
-               {customer.photo ? <img src={customer.photo} className="w-full h-full object-cover"/> : <div className="w-full h-full flex items-center justify-center bg-primary text-primary-foreground font-bold">{customer.name.charAt(0)}</div>}
+               {customer.photo ? <img src={customer.photo} className="w-full h-full object-cover"/> : <div className="w-full h-full flex items-center justify-center bg-primary text-primary-foreground font-bold text-base">{customer.name.charAt(0)}</div>}
              </div>
              <div className="flex-1">
                <h3 className="font-semibold">{customer.name}</h3>

@@ -37,7 +37,7 @@ export default function CustomerDetails() {
       actions={
         <Avatar className="w-8 h-8 border border-background">
           <AvatarImage src={customer.photo} />
-          <AvatarFallback>{customer.name.charAt(0)}</AvatarFallback>
+          <AvatarFallback className="bg-primary text-primary-foreground text-xs font-bold">{customer.name.charAt(0)}</AvatarFallback>
         </Avatar>
       }
     >

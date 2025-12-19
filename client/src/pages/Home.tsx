@@ -230,7 +230,7 @@ export default function Home() {
                           {customer?.photo ? (
                             <img src={customer.photo} alt={customer.name} className="w-full h-full object-cover" />
                           ) : (
-                            <div className="w-full h-full flex items-center justify-center bg-secondary text-secondary-foreground font-bold text-lg">
+                            <div className="w-full h-full flex items-center justify-center bg-primary text-primary-foreground font-bold text-lg">
                               {customer?.name.charAt(0) || '?'}
                             </div>
                           )}

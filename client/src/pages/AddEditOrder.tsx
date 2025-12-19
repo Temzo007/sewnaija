@@ -2,6 +2,7 @@ import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -16,15 +17,18 @@ import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { Check } from "lucide-react";
+import { Check, Grid2X2 } from "lucide-react";
 import { queryClient } from "@/lib/queryClient";
-import { Dialog, DialogContent, DialogTrigger, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { useQuery } from "@tanstack/react-query";
 
 const schema = z.object({
   description: z.string().min(1, "Description is required"),
   customerId: z.string().min(1, "Customer is required"),
   cost: z.string().min(1, "Cost is required"),
   deadline: z.date({ required_error: "Deadline is required" }),
+  notes: z.string().optional(),
   customMeasurements: z.array(z.object({
     name: z.string().min(1),
     value: z.string()
@@ -45,18 +49,27 @@ export default function AddEditOrder() {
   const [materials, setMaterials] = useState<string[]>([]);
   const [styles, setStyles] = useState<string[]>([]);
   const [showImageSourceModal, setShowImageSourceModal] = useState<'material' | 'style' | null>(null);
+  const [showAppGallery, setShowAppGallery] = useState(false);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
   const currentImageType = useRef<'material' | 'style'>('material');
   
   // Combobox state
   const [openCombobox, setOpenCombobox] = useState(false);
 
+  // Query gallery items
+  const { data: gallery = [] } = useQuery({
+    queryKey: ['gallery'],
+    queryFn: () => db.getGallery()
+  });
+
   const { register, handleSubmit, control, setValue, watch, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
       customMeasurements: [],
-      customerId: preSelectedCustomerId || ""
+      customerId: preSelectedCustomerId || "",
+      notes: ""
     }
   });
 
@@ -79,6 +92,7 @@ export default function AddEditOrder() {
           setValue('cost', order.cost);
           setValue('deadline', new Date(order.deadline));
           setValue('customMeasurements', order.customMeasurements);
+          setValue('notes', order.notes || '');
           setMaterials(order.materials);
           setStyles(order.styles);
         }
@@ -131,16 +145,24 @@ export default function AddEditOrder() {
   };
 
   const handleImageSourceSelection = (source: 'camera' | 'phone' | 'app') => {
-    if (source === 'app' && showImageSourceModal === 'style') {
-      // For app gallery - you'd integrate with your gallery here
-      // For now, just use file input
-      currentImageType.current = 'style';
+    currentImageType.current = showImageSourceModal || 'material';
+    
+    if (source === 'camera') {
+      cameraInputRef.current?.click();
+    } else if (source === 'phone') {
       fileInputRef.current?.click();
-    } else {
-      // For camera and phone gallery - use file input (works for both)
-      currentImageType.current = showImageSourceModal || 'material';
-      fileInputRef.current?.click();
+    } else if (source === 'app') {
+      setShowAppGallery(true);
     }
+  };
+
+  const addImageFromGallery = (url: string) => {
+    if (currentImageType.current === 'material') {
+      setMaterials(prev => [...prev, url]);
+    } else {
+      setStyles(prev => [...prev, url]);
+    }
+    setShowAppGallery(false);
   };
 
   return (
@@ -226,6 +248,18 @@ export default function AddEditOrder() {
           </div>
         </div>
 
+        {/* Notes */}
+        <div className="space-y-2">
+          <Label htmlFor="notes">Notes</Label>
+          <Textarea 
+            id="notes" 
+            {...register("notes")} 
+            placeholder="Add any additional notes about this order..." 
+            className="bg-card resize-none"
+            rows={3}
+          />
+        </div>
+
         {/* Images: Materials & Styles */}
         <div className="space-y-4">
            <Label className="text-base font-semibold">Images</Label>
@@ -284,7 +318,7 @@ export default function AddEditOrder() {
                    </DialogHeader>
                    <div className="space-y-2">
                      <Button variant="outline" className="w-full h-12 gap-2" onClick={() => handleImageSourceSelection('app')}>
-                       <ImageIcon className="w-4 h-4" /> App Gallery
+                       <Grid2X2 className="w-4 h-4" /> App Gallery
                      </Button>
                      <Button variant="outline" className="w-full h-12 gap-2" onClick={() => handleImageSourceSelection('phone')}>
                        <ImageIcon className="w-4 h-4" /> Phone Gallery
@@ -310,13 +344,49 @@ export default function AddEditOrder() {
            </div>
         </div>
 
-        {/* Hidden file input */}
+        {/* App Gallery Modal */}
+        <Dialog open={showAppGallery} onOpenChange={setShowAppGallery}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Select from App Gallery</DialogTitle>
+            </DialogHeader>
+            <ScrollArea className="h-[400px]">
+              <div className="grid grid-cols-3 gap-3 p-4">
+                {gallery.length === 0 ? (
+                  <div className="col-span-3 text-center py-8 text-muted-foreground">
+                    No images in gallery
+                  </div>
+                ) : (
+                  gallery.map(item => (
+                    <div 
+                      key={item.id}
+                      className="aspect-square rounded-lg overflow-hidden cursor-pointer hover:opacity-75 transition-opacity border"
+                      onClick={() => addImageFromGallery(item.url)}
+                    >
+                      <img src={item.url} className="w-full h-full object-cover" />
+                    </div>
+                  ))
+                )}
+              </div>
+            </ScrollArea>
+          </DialogContent>
+        </Dialog>
+
+        {/* Hidden file inputs */}
         <input 
           type="file" 
           accept="image/*" 
           multiple 
           className="hidden" 
           ref={fileInputRef}
+          onChange={(e) => handleImageUpload(e, currentImageType.current)}
+        />
+        <input 
+          type="file" 
+          accept="image/*" 
+          capture="environment"
+          className="hidden" 
+          ref={cameraInputRef}
           onChange={(e) => handleImageUpload(e, currentImageType.current)}
         />
 

@@ -22,6 +22,7 @@ export interface Order {
   styles: string[]; // URLs/Paths to images
   deadline: string; // ISO date string
   cost: string;
+  notes?: string; // Optional notes about the order
   status: 'pending' | 'completed';
   createdAt: string;
 }

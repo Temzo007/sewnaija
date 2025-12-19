@@ -61,7 +61,7 @@ export default function Customers() {
                       {/* Avatar */}
                       <Avatar className="w-14 h-14 border-2 border-background shadow-sm cursor-pointer" onClick={() => setLocation(`/customers/${customer.id}`)}>
                         <AvatarImage src={customer.photo} className="object-cover" />
-                        <AvatarFallback className="bg-secondary text-secondary-foreground font-bold text-lg">
+                        <AvatarFallback className="bg-primary text-primary-foreground font-bold text-lg">
                           {customer.name.charAt(0)}
                         </AvatarFallback>
                       </Avatar>
