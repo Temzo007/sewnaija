@@ -124,7 +124,7 @@ export default function Gallery() {
   const magnifiedImage = magnifiedImageIndex !== null ? currentAlbumImages[magnifiedImageIndex] : null;
 
   // Full Screen Gallery View
-  if (selectedAlbumId && magnifiedImageIndex !== null) {
+  if (selectedAlbumId && magnifiedImageIndex !== null && magnifiedImage) {
     return (
       <div className="fixed inset-0 bg-gradient-to-b from-black via-black to-black/95 z-50 flex flex-col" onKeyDown={handleKeyDown} tabIndex={0}>
         {/* Top Bar */}
@@ -150,7 +150,7 @@ export default function Gallery() {
         {/* Image Viewer */}
         <div className="flex-1 flex items-center justify-center relative group">
           <img 
-            src={currentAlbumImages[magnifiedImageIndex].url} 
+            src={magnifiedImage.url} 
             alt="Gallery Item" 
             className="max-w-full max-h-full object-contain"
           />
@@ -181,7 +181,7 @@ export default function Gallery() {
           <div className="flex-1 flex gap-2">
             <Button
               size="sm"
-              onClick={() => handleShareImage(currentAlbumImages[magnifiedImageIndex].url)}
+              onClick={() => handleShareImage(magnifiedImage.url)}
               className="flex-1 bg-white/10 hover:bg-white/20 text-white border border-white/20 transition-all duration-200"
               variant="outline"
             >
@@ -189,7 +189,7 @@ export default function Gallery() {
             </Button>
             <Button
               size="sm"
-              onClick={() => handleDeleteImage(currentAlbumImages[magnifiedImageIndex].id)}
+              onClick={() => handleDeleteImage(magnifiedImage.id)}
               className="flex-1 bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-500/30 transition-all duration-200"
               variant="outline"
             >
