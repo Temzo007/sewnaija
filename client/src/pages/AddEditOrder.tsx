@@ -231,11 +231,18 @@ export default function AddEditOrder() {
               <PopoverTrigger asChild>
                 <Button variant={"outline"} className={cn("w-full h-12 justify-start text-left font-normal bg-card", !selectedDate && "text-muted-foreground")}>
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  {selectedDate ? format(selectedDate, "PPP") : <span>Pick a date</span>}
+                  {selectedDate ? format(selectedDate, "EEEE, MMM d") : <span>Pick a date</span>}
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-auto p-0">
-                <Calendar mode="single" selected={selectedDate} onSelect={(date) => date && setValue("deadline", date)} initialFocus />
+              <PopoverContent className="w-full max-w-sm p-4">
+                <div className="space-y-4">
+                  <Calendar mode="single" selected={selectedDate} onSelect={(date) => date && setValue("deadline", date)} initialFocus />
+                  {selectedDate && (
+                    <div className="p-3 bg-muted rounded-lg text-sm">
+                      <p className="font-semibold">{format(selectedDate, "EEEE, MMMM d, yyyy")}</p>
+                    </div>
+                  )}
+                </div>
               </PopoverContent>
             </Popover>
             {errors.deadline && <span className="text-red-500 text-sm">{errors.deadline.message}</span>}

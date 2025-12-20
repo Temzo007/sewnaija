@@ -54,7 +54,7 @@ export default function OrderDetails() {
                 {order.status.toUpperCase()}
               </Badge>
               <span className="text-sm text-muted-foreground flex items-center gap-1">
-                <Calendar className="w-3 h-3" /> {new Date(order.deadline).toDateString()}
+                <Calendar className="w-3 h-3" /> {new Date(order.deadline).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
               </span>
             </div>
           </div>

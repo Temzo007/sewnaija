@@ -244,7 +244,7 @@ export default function Home() {
                         <div className="flex-1 min-w-0">
                           <h3 className="font-semibold text-base truncate">{customer?.name || 'Unknown Customer'}</h3>
                           <p className="text-sm text-muted-foreground truncate">{order.description}</p>
-                          <p className="text-xs text-primary mt-1 font-medium">Due: {new Date(order.deadline).toLocaleDateString()}</p>
+                          <p className="text-xs text-primary mt-1 font-medium">Due: {new Date(order.deadline).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</p>
                         </div>
 
                         {/* Actions */}

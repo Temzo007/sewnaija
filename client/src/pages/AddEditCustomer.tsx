@@ -110,7 +110,7 @@ export default function AddEditCustomer() {
 
         {/* Photo Upload */}
         <div className="flex flex-col items-center gap-3">
-          <div className="relative w-24 h-24 rounded-full bg-muted border-2 border-dashed border-muted-foreground/30 flex items-center justify-center overflow-hidden group cursor-pointer">
+          <div className="relative w-32 h-32 rounded-full bg-muted border-2 border-dashed border-muted-foreground/30 flex items-center justify-center overflow-hidden group cursor-pointer flex-shrink-0">
             <input 
               type="file" 
               accept="image/*" 

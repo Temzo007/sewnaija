@@ -128,7 +128,7 @@ export default function CustomerDetails() {
                     <CardContent className="p-4 flex items-center justify-between cursor-pointer hover:bg-muted/50 transition-colors">
                       <div>
                         <div className="font-semibold">{order.description}</div>
-                        <div className="text-xs text-muted-foreground">{new Date(order.createdAt).toLocaleDateString()}</div>
+                        <div className="text-xs text-muted-foreground">{new Date(order.createdAt).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</div>
                       </div>
                       <Badge variant={order.status === 'pending' ? 'destructive' : 'default'} className={order.status === 'pending' ? 'bg-orange-100 text-orange-700 hover:bg-orange-100' : 'bg-green-100 text-green-700 hover:bg-green-100'}>
                         {order.status}
