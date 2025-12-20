@@ -1,7 +1,7 @@
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Camera, Image as ImageIcon, Plus, Trash2, Share2, MoreVertical } from "lucide-react";
+import { Camera, Image as ImageIcon, Plus, Trash2, Share2, X, ChevronLeft, ChevronRight, MoreVertical } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { db } from "@/lib/db";
 import { useState, useRef } from "react";
@@ -25,31 +25,23 @@ export default function Gallery() {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
-  const [selectedAlbumId, setSelectedAlbumId] = useState<string>('');
-  const [magnifiedImage, setMagnifiedImage] = useState<GalleryItem | null>(null);
+  const [selectedAlbumId, setSelectedAlbumId] = useState<string | null>(null);
   const [magnifiedImageIndex, setMagnifiedImageIndex] = useState<number | null>(null);
   const [newAlbumName, setNewAlbumName] = useState('');
   const [showNewAlbumDialog, setShowNewAlbumDialog] = useState(false);
   const { toast } = useToast();
 
-  // Set default album on load
-  const defaultAlbum = albums[0]?.id;
-  if (!selectedAlbumId && defaultAlbum) {
-    setSelectedAlbumId(defaultAlbum);
-  }
+  const currentAlbumImages = selectedAlbumId ? gallery.filter(item => item.albumId === selectedAlbumId) : [];
 
-  const currentAlbumImages = gallery.filter(item => item.albumId === selectedAlbumId);
-
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, albumId?: string) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
-    const targetAlbumId = albumId || selectedAlbumId;
-    if (files && targetAlbumId) {
+    if (files && selectedAlbumId) {
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
         const reader = new FileReader();
         reader.onloadend = async () => {
           const url = reader.result as string;
-          await db.addToGallery(url, targetAlbumId);
+          await db.addToGallery(url, selectedAlbumId);
           queryClient.invalidateQueries({ queryKey: ['gallery'] });
         };
         reader.readAsDataURL(file);
@@ -71,7 +63,7 @@ export default function Gallery() {
     if (confirm('Delete this album and all its images?')) {
       await db.deleteGalleryAlbum(albumId);
       queryClient.invalidateQueries({ queryKey: ['gallery-albums', 'gallery'] });
-      setSelectedAlbumId(albums.find(a => a.id !== albumId)?.id || '');
+      setSelectedAlbumId(null);
       toast({ title: "Album deleted" });
     }
   };
@@ -80,23 +72,27 @@ export default function Gallery() {
     if (confirm('Delete this image?')) {
       await db.deleteFromGallery(itemId);
       queryClient.invalidateQueries({ queryKey: ['gallery'] });
-      setMagnifiedImage(null);
+      if (magnifiedImageIndex !== null && magnifiedImageIndex >= currentAlbumImages.length - 1) {
+        setMagnifiedImageIndex(magnifiedImageIndex - 1);
+      }
     }
   };
 
   const handleShareImage = async (imageUrl: string) => {
     if (navigator.share) {
       try {
+        const response = await fetch(imageUrl);
+        const blob = await response.blob();
+        const file = new File([blob], "image.jpg", { type: "image/jpeg" });
         await navigator.share({
+          files: [file],
           title: 'Share Image',
-          text: 'Check out this image from SewNaija',
-          url: imageUrl
+          text: 'Check out this image from SewNaija'
         });
       } catch (err) {
-        // User cancelled
+        toast({ title: "Error", description: "Could not share image", variant: "destructive" });
       }
     } else {
-      // Fallback: copy to clipboard
       try {
         await navigator.clipboard.writeText(imageUrl);
         toast({ title: "Copied", description: "Image URL copied to clipboard" });
@@ -109,14 +105,12 @@ export default function Gallery() {
   const handleSwipeNext = () => {
     if (magnifiedImageIndex !== null && magnifiedImageIndex < currentAlbumImages.length - 1) {
       setMagnifiedImageIndex(magnifiedImageIndex + 1);
-      setMagnifiedImage(currentAlbumImages[magnifiedImageIndex + 1]);
     }
   };
 
   const handleSwipePrev = () => {
     if (magnifiedImageIndex !== null && magnifiedImageIndex > 0) {
       setMagnifiedImageIndex(magnifiedImageIndex - 1);
-      setMagnifiedImage(currentAlbumImages[magnifiedImageIndex - 1]);
     }
   };
 
@@ -125,10 +119,125 @@ export default function Gallery() {
     if (e.key === 'ArrowLeft') handleSwipePrev();
   };
 
+  const magnifiedImage = magnifiedImageIndex !== null ? currentAlbumImages[magnifiedImageIndex] : null;
+
+  // Native Gallery View - Full Screen
+  if (selectedAlbumId) {
+    return (
+      <div className="fixed inset-0 bg-black z-50 flex flex-col">
+        {/* Header */}
+        <div className="bg-black/80 text-white p-4 flex items-center justify-between">
+          <h2 className="text-xl font-heading font-semibold">{albums.find(a => a.id === selectedAlbumId)?.name}</h2>
+          <button onClick={() => setSelectedAlbumId(null)} className="p-2 hover:bg-white/20 rounded-lg transition-colors">
+            <X className="w-6 h-6" />
+          </button>
+        </div>
+
+        {/* Gallery Content */}
+        <div className="flex-1 flex items-center justify-center relative overflow-hidden">
+          {currentAlbumImages.length === 0 ? (
+            <div className="flex flex-col items-center justify-center gap-4 text-white">
+              <ImageIcon className="w-16 h-16 opacity-50" />
+              <p className="text-lg opacity-75">No images in this album</p>
+              <div className="flex gap-2">
+                <Button size="sm" variant="outline" onClick={() => cameraInputRef.current?.click()} className="bg-white/10 text-white border-white/30 hover:bg-white/20">
+                  <Camera className="w-4 h-4 mr-2" /> Camera
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => fileInputRef.current?.click()} className="bg-white/10 text-white border-white/30 hover:bg-white/20">
+                  <Plus className="w-4 h-4 mr-2" /> Add Photos
+                </Button>
+              </div>
+            </div>
+          ) : magnifiedImageIndex !== null ? (
+            <>
+              <img src={currentAlbumImages[magnifiedImageIndex].url} alt="Gallery Item" className="max-w-full max-h-[calc(100vh-160px)] object-contain" />
+
+              {/* Navigation Arrows */}
+              <div className="absolute inset-0 flex items-center justify-between px-4 pointer-events-none">
+                {magnifiedImageIndex > 0 && (
+                  <button
+                    onClick={handleSwipePrev}
+                    className="pointer-events-auto p-3 rounded-full bg-white/20 text-white hover:bg-white/40 transition-colors"
+                  >
+                    <ChevronLeft className="w-6 h-6" />
+                  </button>
+                )}
+                {magnifiedImageIndex < currentAlbumImages.length - 1 && (
+                  <button
+                    onClick={handleSwipeNext}
+                    className="pointer-events-auto ml-auto p-3 rounded-full bg-white/20 text-white hover:bg-white/40 transition-colors"
+                  >
+                    <ChevronRight className="w-6 h-6" />
+                  </button>
+                )}
+              </div>
+
+              {/* Image Counter */}
+              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-white text-sm bg-black/50 px-3 py-1 rounded-full">
+                {magnifiedImageIndex + 1} / {currentAlbumImages.length}
+              </div>
+            </>
+          ) : (
+            <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 p-4 w-full overflow-y-auto">
+              {currentAlbumImages.map((item, idx) => (
+                <div
+                  key={item.id}
+                  className="aspect-square cursor-pointer rounded-lg overflow-hidden hover:opacity-80 transition-opacity"
+                  onClick={() => setMagnifiedImageIndex(idx)}
+                >
+                  <img src={item.url} alt="Gallery Item" className="w-full h-full object-cover" />
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Footer - Action Buttons */}
+        {magnifiedImageIndex !== null && (
+          <div className="bg-black/80 text-white p-4 flex items-center justify-between">
+            <button onClick={() => setMagnifiedImageIndex(null)} className="p-2 hover:bg-white/20 rounded-lg transition-colors">
+              <ImageIcon className="w-5 h-5" />
+            </button>
+            <div className="flex gap-2">
+              <Button size="sm" variant="outline" onClick={() => handleShareImage(currentAlbumImages[magnifiedImageIndex].url)} className="bg-white/10 text-white border-white/30 hover:bg-white/20">
+                <Share2 className="w-4 h-4 mr-1" /> Share
+              </Button>
+              <Button size="sm" variant="destructive" onClick={() => handleDeleteImage(currentAlbumImages[magnifiedImageIndex].id)}>
+                <Trash2 className="w-4 h-4 mr-1" /> Delete
+              </Button>
+            </div>
+            <div className="text-sm text-white/60">
+              {magnifiedImageIndex + 1} / {currentAlbumImages.length}
+            </div>
+          </div>
+        )}
+
+        {/* Footer - Grid/Add View */}
+        {magnifiedImageIndex === null && currentAlbumImages.length > 0 && (
+          <div className="bg-black/80 text-white p-4 flex items-center justify-between">
+            <span className="text-sm opacity-75">{currentAlbumImages.length} image{currentAlbumImages.length !== 1 ? 's' : ''}</span>
+            <div className="flex gap-2">
+              <Button size="sm" variant="outline" onClick={() => cameraInputRef.current?.click()} className="bg-white/10 text-white border-white/30 hover:bg-white/20">
+                <Camera className="w-4 h-4 mr-1" /> Camera
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => fileInputRef.current?.click()} className="bg-white/10 text-white border-white/30 hover:bg-white/20">
+                <Plus className="w-4 h-4 mr-1" /> Add
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Hidden Inputs */}
+        <input type="file" accept="image/*" multiple className="hidden" ref={fileInputRef} onChange={handleFileUpload} />
+        <input type="file" accept="image/*" capture="environment" className="hidden" ref={cameraInputRef} onChange={handleFileUpload} />
+      </div>
+    );
+  }
+
+  // Albums List View
   return (
     <Layout>
-      <div className="p-4 max-w-6xl mx-auto pb-24 space-y-6">
-        {/* Albums Grid Header */}
+      <div className="p-4 max-w-4xl mx-auto pb-24 space-y-6">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-heading font-semibold">Albums</h2>
           <Dialog open={showNewAlbumDialog} onOpenChange={setShowNewAlbumDialog}>
@@ -158,33 +267,41 @@ export default function Gallery() {
           </Dialog>
         </div>
 
-        {/* Albums Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {albums.map(album => {
-            const albumImageCount = gallery.filter(item => item.albumId === album.id).length;
-            const firstImage = gallery.find(item => item.albumId === album.id);
-            return (
-              <Card 
-                key={album.id}
-                className={`overflow-hidden shadow-sm border-2 cursor-pointer transition-all ${selectedAlbumId === album.id ? 'border-primary ring-2 ring-primary' : 'border-transparent'}`}
-                onClick={() => setSelectedAlbumId(album.id)}
-              >
-                <CardContent className="p-0 relative aspect-square group">
-                  {firstImage ? (
-                    <img src={firstImage.url} alt={album.name} className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-muted">
-                      <ImageIcon className="w-8 h-8 text-muted-foreground" />
-                    </div>
-                  )}
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-between p-3">
-                    <div className="text-white">
-                      <h3 className="font-semibold text-sm">{album.name}</h3>
-                      <p className="text-xs opacity-90">{albumImageCount} image{albumImageCount !== 1 ? 's' : ''}</p>
-                    </div>
+        {albums.length === 0 ? (
+          <div className="text-center py-20 text-muted-foreground">
+            <ImageIcon className="w-12 h-12 mx-auto mb-4 opacity-20" />
+            <p>No albums yet. Create one to get started!</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            {albums.map(album => {
+              const albumImageCount = gallery.filter(item => item.albumId === album.id).length;
+              const firstImage = gallery.find(item => item.albumId === album.id);
+
+              return (
+                <div key={album.id} className="group">
+                  <Card
+                    className="overflow-hidden shadow-sm border-none cursor-pointer transition-all hover:shadow-md active:scale-95"
+                    onClick={() => setSelectedAlbumId(album.id)}
+                  >
+                    <CardContent className="p-0 aspect-square relative">
+                      {firstImage ? (
+                        <img src={firstImage.url} alt={album.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-muted">
+                          <ImageIcon className="w-8 h-8 text-muted-foreground" />
+                        </div>
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex flex-col items-end justify-end p-3">
+                        <h3 className="text-white font-semibold text-sm">{album.name}</h3>
+                        <p className="text-white/80 text-xs">{albumImageCount} image{albumImageCount !== 1 ? 's' : ''}</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <div className="opacity-0 group-hover:opacity-100 transition-opacity mt-2 flex justify-end">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                        <Button size="sm" variant="ghost" className="h-8 w-8 bg-white/20 hover:bg-white/40 text-white">
+                        <Button size="sm" variant="outline" className="h-8 w-8 p-0">
                           <MoreVertical className="w-4 h-4" />
                         </Button>
                       </DropdownMenuTrigger>
@@ -196,130 +313,11 @@ export default function Gallery() {
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-
-        {/* Selected Album Images */}
-        {selectedAlbumId && (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-heading font-semibold">{albums.find(a => a.id === selectedAlbumId)?.name}</h3>
-              <div className="flex gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  <ImageIcon className="w-4 h-4 mr-1" /> Add Photos
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => cameraInputRef.current?.click()}
-                >
-                  <Camera className="w-4 h-4 mr-1" /> Camera
-                </Button>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {currentAlbumImages.length === 0 ? (
-                <div className="col-span-full py-20 text-center text-muted-foreground">
-                  <ImageIcon className="w-12 h-12 mx-auto mb-4 opacity-20" />
-                  <p>No images in this album.</p>
                 </div>
-              ) : (
-                currentAlbumImages.map((item, idx) => (
-                  <Dialog key={item.id} open={magnifiedImage?.id === item.id} onOpenChange={(open) => !open && setMagnifiedImage(null)}>
-                    <DialogTrigger asChild>
-                      <Card className="aspect-square overflow-hidden cursor-pointer hover:opacity-90 transition-opacity border-none shadow-sm group relative">
-                        <img src={item.url} alt="Gallery Item" className="w-full h-full object-cover" />
-                        <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity" />
-                      </Card>
-                    </DialogTrigger>
-                    <DialogContent 
-                      className="max-w-4xl p-4 overflow-hidden bg-transparent border-none shadow-none" 
-                      onKeyDown={handleKeyDown}
-                      onClick={() => {
-                        setMagnifiedImage(item);
-                        setMagnifiedImageIndex(idx);
-                      }}
-                    >
-                      <div className="relative w-full h-full flex flex-col items-center justify-center gap-4">
-                        <img src={item.url} alt="Full View" className="max-w-full max-h-[70vh] rounded-lg" />
-                        
-                        {/* Swipe Navigation */}
-                        <div className="absolute inset-0 flex items-center justify-between px-4 pointer-events-none">
-                          {idx > 0 && (
-                            <button
-                              onClick={handleSwipePrev}
-                              className="pointer-events-auto p-2 rounded-full bg-white/20 text-white hover:bg-white/40 transition-colors"
-                            >
-                              ←
-                            </button>
-                          )}
-                          {idx < currentAlbumImages.length - 1 && (
-                            <button
-                              onClick={handleSwipeNext}
-                              className="pointer-events-auto ml-auto p-2 rounded-full bg-white/20 text-white hover:bg-white/40 transition-colors"
-                            >
-                              →
-                            </button>
-                          )}
-                        </div>
-
-                        {/* Image counter */}
-                        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-white text-sm bg-black/50 px-3 py-1 rounded-full pointer-events-none">
-                          {idx + 1} / {currentAlbumImages.length}
-                        </div>
-
-                        {/* Action Buttons */}
-                        <div className="flex gap-2 z-50">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleShareImage(item.url)}
-                            className="bg-white/90 hover:bg-white"
-                          >
-                            <Share2 className="w-4 h-4 mr-1" /> Share
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="destructive"
-                            onClick={() => handleDeleteImage(item.id)}
-                          >
-                            <Trash2 className="w-4 h-4 mr-1" /> Delete
-                          </Button>
-                        </div>
-                      </div>
-                    </DialogContent>
-                  </Dialog>
-                ))
-              )}
-            </div>
+              );
+            })}
           </div>
         )}
-
-        {/* Hidden file inputs */}
-        <input
-          type="file"
-          accept="image/*"
-          multiple
-          className="hidden"
-          ref={fileInputRef}
-          onChange={(e) => handleFileUpload(e)}
-        />
-        <input
-          type="file"
-          accept="image/*"
-          capture="environment"
-          className="hidden"
-          ref={cameraInputRef}
-          onChange={(e) => handleFileUpload(e)}
-        />
       </div>
     </Layout>
   );

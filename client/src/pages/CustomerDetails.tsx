@@ -48,9 +48,9 @@ export default function CustomerDetails() {
 
         {/* Customer Header - Name and Photo */}
         <div className="flex flex-col items-center gap-3 text-center">
-          <Avatar className="w-24 h-24 border-4 border-primary/20">
-            <AvatarImage src={customer.photo} />
-            <AvatarFallback className="bg-primary text-primary-foreground text-3xl font-bold">{customer.name.charAt(0)}</AvatarFallback>
+          <Avatar className="w-40 h-40 border-4 border-primary/20 flex-shrink-0">
+            <AvatarImage src={customer.photo} className="object-cover" />
+            <AvatarFallback className="bg-primary text-primary-foreground text-5xl font-bold">{customer.name.charAt(0)}</AvatarFallback>
           </Avatar>
           <div>
             <h1 className="text-3xl font-bold font-heading">{customer.name}</h1>
