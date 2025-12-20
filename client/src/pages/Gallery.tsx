@@ -1,7 +1,7 @@
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Camera, Image as ImageIcon, Plus, Trash2, Share2, X, ChevronLeft, ChevronRight, MoreVertical } from "lucide-react";
+import { Camera, Image as ImageIcon, Plus, Trash2, Share2, X, ChevronLeft, ChevronRight, MoreVertical, Grid3x3, Maximize2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { db } from "@/lib/db";
 import { useState, useRef } from "react";
@@ -32,6 +32,7 @@ export default function Gallery() {
   const { toast } = useToast();
 
   const currentAlbumImages = selectedAlbumId ? gallery.filter(item => item.albumId === selectedAlbumId) : [];
+  const selectedAlbumName = albums.find(a => a.id === selectedAlbumId)?.name;
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -43,6 +44,7 @@ export default function Gallery() {
           const url = reader.result as string;
           await db.addToGallery(url, selectedAlbumId);
           queryClient.invalidateQueries({ queryKey: ['gallery'] });
+          toast({ title: "Success", description: "Image added to album" });
         };
         reader.readAsDataURL(file);
       }
@@ -73,7 +75,7 @@ export default function Gallery() {
       await db.deleteFromGallery(itemId);
       queryClient.invalidateQueries({ queryKey: ['gallery'] });
       if (magnifiedImageIndex !== null && magnifiedImageIndex >= currentAlbumImages.length - 1) {
-        setMagnifiedImageIndex(magnifiedImageIndex - 1);
+        setMagnifiedImageIndex(null);
       }
     }
   };
@@ -121,111 +123,151 @@ export default function Gallery() {
 
   const magnifiedImage = magnifiedImageIndex !== null ? currentAlbumImages[magnifiedImageIndex] : null;
 
-  // Native Gallery View - Full Screen
-  if (selectedAlbumId) {
+  // Full Screen Gallery View
+  if (selectedAlbumId && magnifiedImageIndex !== null) {
     return (
-      <div className="fixed inset-0 bg-black z-50 flex flex-col">
-        {/* Header */}
-        <div className="bg-black/80 text-white p-4 flex items-center justify-between">
-          <h2 className="text-xl font-heading font-semibold">{albums.find(a => a.id === selectedAlbumId)?.name}</h2>
-          <button onClick={() => setSelectedAlbumId(null)} className="p-2 hover:bg-white/20 rounded-lg transition-colors">
-            <X className="w-6 h-6" />
+      <div className="fixed inset-0 bg-gradient-to-b from-black via-black to-black/95 z-50 flex flex-col" onKeyDown={handleKeyDown} tabIndex={0}>
+        {/* Top Bar */}
+        <div className="backdrop-blur-sm bg-black/40 border-b border-white/10 px-4 py-3 flex items-center justify-between">
+          <div className="flex-1">
+            <h2 className="text-white font-heading font-semibold truncate">{selectedAlbumName}</h2>
+            <p className="text-white/60 text-xs mt-0.5">{magnifiedImageIndex + 1} of {currentAlbumImages.length}</p>
+          </div>
+          <button 
+            onClick={() => setMagnifiedImageIndex(null)}
+            className="p-2 hover:bg-white/10 rounded-lg transition-all duration-200 text-white/80 hover:text-white"
+          >
+            <Grid3x3 className="w-5 h-5" />
+          </button>
+          <button 
+            onClick={() => setSelectedAlbumId(null)}
+            className="p-2 hover:bg-white/10 rounded-lg transition-all duration-200 text-white/80 hover:text-white"
+          >
+            <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Gallery Content */}
-        <div className="flex-1 flex items-center justify-center relative overflow-hidden">
+        {/* Image Viewer */}
+        <div className="flex-1 flex items-center justify-center relative group">
+          <img 
+            src={currentAlbumImages[magnifiedImageIndex].url} 
+            alt="Gallery Item" 
+            className="max-w-full max-h-full object-contain"
+          />
+
+          {/* Navigation */}
+          <div className="absolute inset-0 flex items-center justify-between px-3 pointer-events-none">
+            {magnifiedImageIndex > 0 && (
+              <button
+                onClick={handleSwipePrev}
+                className="pointer-events-auto p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all duration-200 backdrop-blur-sm active:scale-95"
+              >
+                <ChevronLeft className="w-6 h-6" />
+              </button>
+            )}
+            {magnifiedImageIndex < currentAlbumImages.length - 1 && (
+              <button
+                onClick={handleSwipeNext}
+                className="pointer-events-auto ml-auto p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all duration-200 backdrop-blur-sm active:scale-95"
+              >
+                <ChevronRight className="w-6 h-6" />
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Bottom Action Bar */}
+        <div className="backdrop-blur-sm bg-black/40 border-t border-white/10 px-4 py-4 flex items-center justify-between gap-3">
+          <div className="flex-1 flex gap-2">
+            <Button
+              size="sm"
+              onClick={() => handleShareImage(currentAlbumImages[magnifiedImageIndex].url)}
+              className="flex-1 bg-white/10 hover:bg-white/20 text-white border border-white/20 transition-all duration-200"
+              variant="outline"
+            >
+              <Share2 className="w-4 h-4 mr-2" /> Share
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => handleDeleteImage(currentAlbumImages[magnifiedImageIndex].id)}
+              className="flex-1 bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-500/30 transition-all duration-200"
+              variant="outline"
+            >
+              <Trash2 className="w-4 h-4 mr-2" /> Delete
+            </Button>
+          </div>
+        </div>
+
+        {/* Hidden Inputs */}
+        <input type="file" accept="image/*" multiple className="hidden" ref={fileInputRef} onChange={handleFileUpload} />
+        <input type="file" accept="image/*" capture="environment" className="hidden" ref={cameraInputRef} onChange={handleFileUpload} />
+      </div>
+    );
+  }
+
+  // Album Content View
+  if (selectedAlbumId) {
+    return (
+      <div className="fixed inset-0 bg-gradient-to-b from-background via-background to-background/95 z-50 flex flex-col overflow-hidden">
+        {/* Header */}
+        <div className="border-b border-border/50 px-4 py-4 flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-heading font-semibold">{selectedAlbumName}</h2>
+            <p className="text-xs text-muted-foreground mt-1">{currentAlbumImages.length} image{currentAlbumImages.length !== 1 ? 's' : ''}</p>
+          </div>
+          <button 
+            onClick={() => setSelectedAlbumId(null)}
+            className="p-2 hover:bg-muted rounded-lg transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Image Grid */}
+        <div className="flex-1 overflow-y-auto p-3">
           {currentAlbumImages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center gap-4 text-white">
-              <ImageIcon className="w-16 h-16 opacity-50" />
-              <p className="text-lg opacity-75">No images in this album</p>
-              <div className="flex gap-2">
-                <Button size="sm" variant="outline" onClick={() => cameraInputRef.current?.click()} className="bg-white/10 text-white border-white/30 hover:bg-white/20">
-                  <Camera className="w-4 h-4 mr-2" /> Camera
-                </Button>
-                <Button size="sm" variant="outline" onClick={() => fileInputRef.current?.click()} className="bg-white/10 text-white border-white/30 hover:bg-white/20">
-                  <Plus className="w-4 h-4 mr-2" /> Add Photos
-                </Button>
-              </div>
+            <div className="h-full flex flex-col items-center justify-center gap-4">
+              <ImageIcon className="w-16 h-16 text-muted-foreground/30" />
+              <p className="text-muted-foreground text-center">No images in this album yet</p>
             </div>
-          ) : magnifiedImageIndex !== null ? (
-            <>
-              <img src={currentAlbumImages[magnifiedImageIndex].url} alt="Gallery Item" className="max-w-full max-h-[calc(100vh-160px)] object-contain" />
-
-              {/* Navigation Arrows */}
-              <div className="absolute inset-0 flex items-center justify-between px-4 pointer-events-none">
-                {magnifiedImageIndex > 0 && (
-                  <button
-                    onClick={handleSwipePrev}
-                    className="pointer-events-auto p-3 rounded-full bg-white/20 text-white hover:bg-white/40 transition-colors"
-                  >
-                    <ChevronLeft className="w-6 h-6" />
-                  </button>
-                )}
-                {magnifiedImageIndex < currentAlbumImages.length - 1 && (
-                  <button
-                    onClick={handleSwipeNext}
-                    className="pointer-events-auto ml-auto p-3 rounded-full bg-white/20 text-white hover:bg-white/40 transition-colors"
-                  >
-                    <ChevronRight className="w-6 h-6" />
-                  </button>
-                )}
-              </div>
-
-              {/* Image Counter */}
-              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-white text-sm bg-black/50 px-3 py-1 rounded-full">
-                {magnifiedImageIndex + 1} / {currentAlbumImages.length}
-              </div>
-            </>
           ) : (
-            <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 p-4 w-full overflow-y-auto">
+            <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
               {currentAlbumImages.map((item, idx) => (
                 <div
                   key={item.id}
-                  className="aspect-square cursor-pointer rounded-lg overflow-hidden hover:opacity-80 transition-opacity"
+                  className="aspect-square rounded-lg overflow-hidden cursor-pointer group relative transition-transform duration-200 hover:scale-105 active:scale-95"
                   onClick={() => setMagnifiedImageIndex(idx)}
                 >
                   <img src={item.url} alt="Gallery Item" className="w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-200" />
+                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                    <Maximize2 className="w-6 h-6 text-white drop-shadow-lg" />
+                  </div>
                 </div>
               ))}
             </div>
           )}
         </div>
 
-        {/* Footer - Action Buttons */}
-        {magnifiedImageIndex !== null && (
-          <div className="bg-black/80 text-white p-4 flex items-center justify-between">
-            <button onClick={() => setMagnifiedImageIndex(null)} className="p-2 hover:bg-white/20 rounded-lg transition-colors">
-              <ImageIcon className="w-5 h-5" />
-            </button>
-            <div className="flex gap-2">
-              <Button size="sm" variant="outline" onClick={() => handleShareImage(currentAlbumImages[magnifiedImageIndex].url)} className="bg-white/10 text-white border-white/30 hover:bg-white/20">
-                <Share2 className="w-4 h-4 mr-1" /> Share
-              </Button>
-              <Button size="sm" variant="destructive" onClick={() => handleDeleteImage(currentAlbumImages[magnifiedImageIndex].id)}>
-                <Trash2 className="w-4 h-4 mr-1" /> Delete
-              </Button>
-            </div>
-            <div className="text-sm text-white/60">
-              {magnifiedImageIndex + 1} / {currentAlbumImages.length}
-            </div>
-          </div>
-        )}
-
-        {/* Footer - Grid/Add View */}
-        {magnifiedImageIndex === null && currentAlbumImages.length > 0 && (
-          <div className="bg-black/80 text-white p-4 flex items-center justify-between">
-            <span className="text-sm opacity-75">{currentAlbumImages.length} image{currentAlbumImages.length !== 1 ? 's' : ''}</span>
-            <div className="flex gap-2">
-              <Button size="sm" variant="outline" onClick={() => cameraInputRef.current?.click()} className="bg-white/10 text-white border-white/30 hover:bg-white/20">
-                <Camera className="w-4 h-4 mr-1" /> Camera
-              </Button>
-              <Button size="sm" variant="outline" onClick={() => fileInputRef.current?.click()} className="bg-white/10 text-white border-white/30 hover:bg-white/20">
-                <Plus className="w-4 h-4 mr-1" /> Add
-              </Button>
-            </div>
-          </div>
-        )}
+        {/* Footer Actions */}
+        <div className="border-t border-border/50 px-4 py-3 flex gap-2">
+          <Button
+            size="sm"
+            onClick={() => cameraInputRef.current?.click()}
+            className="flex-1 transition-all duration-200"
+            variant="outline"
+          >
+            <Camera className="w-4 h-4 mr-2" /> Camera
+          </Button>
+          <Button
+            size="sm"
+            onClick={() => fileInputRef.current?.click()}
+            className="flex-1 transition-all duration-200"
+            variant="outline"
+          >
+            <Plus className="w-4 h-4 mr-2" /> Add Photos
+          </Button>
+        </div>
 
         {/* Hidden Inputs */}
         <input type="file" accept="image/*" multiple className="hidden" ref={fileInputRef} onChange={handleFileUpload} />
@@ -237,20 +279,26 @@ export default function Gallery() {
   // Albums List View
   return (
     <Layout>
-      <div className="p-4 max-w-4xl mx-auto pb-24 space-y-6">
+      <div className="p-4 max-w-5xl mx-auto pb-24 space-y-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-heading font-semibold">Albums</h2>
+          <div>
+            <h1 className="text-2xl font-heading font-bold">Gallery</h1>
+            <p className="text-sm text-muted-foreground mt-1">{albums.length} album{albums.length !== 1 ? 's' : ''}</p>
+          </div>
           <Dialog open={showNewAlbumDialog} onOpenChange={setShowNewAlbumDialog}>
             <DialogTrigger asChild>
-              <Button size="sm" variant="outline">
-                <Plus className="w-4 h-4 mr-1" /> New Album
+              <Button className="transition-all duration-200">
+                <Plus className="w-4 h-4 mr-2" /> New Album
               </Button>
             </DialogTrigger>
             <DialogContent>
-              <div className="space-y-3">
-                <h3 className="font-semibold">Create New Album</h3>
+              <div className="space-y-4">
+                <div>
+                  <h3 className="font-heading font-semibold text-lg">Create Album</h3>
+                  <p className="text-sm text-muted-foreground">Name your new photo album</p>
+                </div>
                 <Input
-                  placeholder="Album name"
+                  placeholder="e.g., Summer Collection"
                   value={newAlbumName}
                   onChange={(e) => setNewAlbumName(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleCreateAlbum()}
@@ -268,12 +316,14 @@ export default function Gallery() {
         </div>
 
         {albums.length === 0 ? (
-          <div className="text-center py-20 text-muted-foreground">
-            <ImageIcon className="w-12 h-12 mx-auto mb-4 opacity-20" />
-            <p>No albums yet. Create one to get started!</p>
+          <div className="rounded-xl border border-dashed border-border bg-muted/30 px-6 py-16 text-center">
+            <ImageIcon className="w-12 h-12 text-muted-foreground/40 mx-auto mb-3" />
+            <h3 className="font-semibold text-foreground mb-1">No albums yet</h3>
+            <p className="text-sm text-muted-foreground mb-4">Create your first album to organize photos</p>
+            <Button onClick={() => setShowNewAlbumDialog(true)}>Create Album</Button>
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {albums.map(album => {
               const albumImageCount = gallery.filter(item => item.albumId === album.id).length;
               const firstImage = gallery.find(item => item.albumId === album.id);
@@ -281,32 +331,35 @@ export default function Gallery() {
               return (
                 <div key={album.id} className="group">
                   <Card
-                    className="overflow-hidden shadow-sm border-none cursor-pointer transition-all hover:shadow-md active:scale-95"
+                    className="overflow-hidden shadow-sm border-border hover:shadow-md transition-all duration-200 cursor-pointer"
                     onClick={() => setSelectedAlbumId(album.id)}
                   >
-                    <CardContent className="p-0 aspect-square relative">
+                    <CardContent className="p-0 aspect-square relative bg-muted">
                       {firstImage ? (
-                        <img src={firstImage.url} alt={album.name} className="w-full h-full object-cover" />
+                        <img src={firstImage.url} alt={album.name} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-muted">
-                          <ImageIcon className="w-8 h-8 text-muted-foreground" />
+                        <div className="w-full h-full flex items-center justify-center">
+                          <ImageIcon className="w-10 h-10 text-muted-foreground/40" />
                         </div>
                       )}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex flex-col items-end justify-end p-3">
-                        <h3 className="text-white font-semibold text-sm">{album.name}</h3>
-                        <p className="text-white/80 text-xs">{albumImageCount} image{albumImageCount !== 1 ? 's' : ''}</p>
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col justify-end p-3">
+                        <h3 className="text-white font-semibold text-sm leading-tight">{album.name}</h3>
+                        <p className="text-white/70 text-xs mt-1">{albumImageCount} image{albumImageCount !== 1 ? 's' : ''}</p>
                       </div>
                     </CardContent>
                   </Card>
-                  <div className="opacity-0 group-hover:opacity-100 transition-opacity mt-2 flex justify-end">
+                  <div className="mt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex justify-end">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                        <Button size="sm" variant="outline" className="h-8 w-8 p-0">
-                          <MoreVertical className="w-4 h-4" />
+                        <Button size="sm" variant="ghost" className="h-8 w-8 p-0 hover:bg-destructive/10">
+                          <MoreVertical className="w-4 h-4 text-muted-foreground hover:text-destructive" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => handleDeleteAlbum(album.id)} className="text-destructive focus:text-destructive">
+                        <DropdownMenuItem 
+                          onClick={() => handleDeleteAlbum(album.id)} 
+                          className="text-destructive focus:text-destructive focus:bg-destructive/10"
+                        >
                           <Trash2 className="w-4 h-4 mr-2" />
                           Delete Album
                         </DropdownMenuItem>

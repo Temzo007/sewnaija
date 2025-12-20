@@ -223,36 +223,66 @@ export default function AddEditOrder() {
           {errors.customerId && <span className="text-red-500 text-sm">{errors.customerId.message}</span>}
         </div>
 
-        {/* Deadline & Cost */}
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2 flex flex-col">
-            <Label>Deadline</Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant={"outline"} className={cn("w-full h-12 justify-start text-left font-normal bg-card", !selectedDate && "text-muted-foreground")}>
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {selectedDate ? format(selectedDate, "EEEE, MMM d") : <span>Pick a date</span>}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-full max-w-sm p-4">
-                <div className="space-y-4">
-                  <Calendar mode="single" selected={selectedDate} onSelect={(date) => date && setValue("deadline", date)} initialFocus />
-                  {selectedDate && (
-                    <div className="p-3 bg-muted rounded-lg text-sm">
-                      <p className="font-semibold">{format(selectedDate, "EEEE, MMMM d, yyyy")}</p>
-                    </div>
+        {/* Deadline */}
+        <div className="space-y-3">
+          <Label className="text-base font-semibold">Deadline</Label>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button 
+                variant={"outline"} 
+                className={cn(
+                  "w-full h-14 justify-start text-left font-normal bg-card border-2 transition-all duration-200",
+                  selectedDate ? "border-primary bg-primary/5" : "border-border text-muted-foreground hover:border-primary"
+                )}
+              >
+                <CalendarIcon className="mr-3 h-5 w-5 text-primary" />
+                <div className="flex flex-col items-start">
+                  {selectedDate ? (
+                    <>
+                      <span className="text-xs text-muted-foreground">Selected Date</span>
+                      <span className="font-semibold">{format(selectedDate, "EEEE, MMMM d, yyyy")}</span>
+                    </>
+                  ) : (
+                    <span>Select deadline date</span>
                   )}
                 </div>
-              </PopoverContent>
-            </Popover>
-            {errors.deadline && <span className="text-red-500 text-sm">{errors.deadline.message}</span>}
-          </div>
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-full p-0 border-2" side="bottom" align="start">
+              <div className="bg-card p-6 space-y-4">
+                <div>
+                  <h3 className="font-heading font-semibold text-lg">Pick Deadline</h3>
+                  <p className="text-xs text-muted-foreground mt-1">When should this order be completed?</p>
+                </div>
+                <div className="bg-background p-4 rounded-lg border border-border">
+                  <Calendar 
+                    mode="single" 
+                    selected={selectedDate} 
+                    onSelect={(date) => date && setValue("deadline", date)} 
+                    initialFocus
+                    className="w-full"
+                  />
+                </div>
+                {selectedDate && (
+                  <div className="p-4 bg-primary/10 border-l-4 border-primary rounded">
+                    <p className="text-xs text-muted-foreground">Deadline:</p>
+                    <p className="font-semibold text-lg">{format(selectedDate, "EEEE, MMMM d, yyyy")}</p>
+                    <p className="text-xs text-primary mt-2 font-medium">
+                      {Math.ceil((selectedDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))} days away
+                    </p>
+                  </div>
+                )}
+              </div>
+            </PopoverContent>
+          </Popover>
+          {errors.deadline && <span className="text-red-500 text-sm">{errors.deadline.message}</span>}
+        </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="cost">Cost (₦)</Label>
-            <Input id="cost" type="number" {...register("cost")} placeholder="0.00" className="h-12 bg-card font-mono" />
-            {errors.cost && <span className="text-red-500 text-sm">{errors.cost.message}</span>}
-          </div>
+        {/* Cost */}
+        <div className="space-y-2">
+          <Label htmlFor="cost">Cost (₦)</Label>
+          <Input id="cost" type="number" {...register("cost")} placeholder="0.00" className="h-12 bg-card font-mono border-2" />
+          {errors.cost && <span className="text-red-500 text-sm">{errors.cost.message}</span>}
         </div>
 
         {/* Notes */}
