@@ -9,13 +9,13 @@
   "orientation": "portrait",
   "icons": [
     {
-      "src": "/attached_assets/generated_images/sewnaija_app_logo_icon.png",
+      "src": "/assets/sewnaija_app_logo_icon-DhXeKyYg.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/attached_assets/generated_images/sewnaija_app_logo_icon.png",
+      "src": "/assets/sewnaija_app_logo_icon-DhXeKyYg.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
