@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Phone, MessageCircle, Calendar, DollarSign, CheckCircle, Ruler } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { db } from "@/lib/db";
+import { getOrder, getCustomer, updateOrder, deleteOrder } from "@/lib/db";
 import { useLocation, useRoute } from "wouter";
 import { formatPhoneForWhatsapp } from "@/lib/types";
 import { queryClient } from "@/lib/queryClient";
@@ -17,12 +17,12 @@ export default function OrderDetails() {
 
   const { data: order } = useQuery({
     queryKey: ['order', id],
-    queryFn: () => db.getOrder(id!)
+    queryFn: () => getOrder(id!)
   });
 
   const { data: customer } = useQuery({
     queryKey: ['customer', order?.customerId],
-    queryFn: () => order ? db.getCustomer(order.customerId) : undefined,
+    queryFn: () => order ? getCustomer(order.customerId) : undefined,
     enabled: !!order
   });
 
@@ -152,7 +152,7 @@ export default function OrderDetails() {
         <div className="pt-4 space-y-3">
           {order.status === 'pending' ? (
              <Button className="w-full h-12 text-lg bg-green-600 hover:bg-green-700 shadow-md" onClick={async () => {
-               await db.updateOrder(order.id, { status: 'completed' });
+               await updateOrder(order.id, { status: 'completed' });
                queryClient.invalidateQueries({ queryKey: ['order', id] });
                toast({ title: "Order Completed!" });
              }}>
@@ -160,7 +160,7 @@ export default function OrderDetails() {
              </Button>
           ) : (
              <Button variant="outline" className="w-full h-12" onClick={async () => {
-               await db.updateOrder(order.id, { status: 'pending' });
+               await updateOrder(order.id, { status: 'pending' });
                queryClient.invalidateQueries({ queryKey: ['order', id] });
              }}>
                Mark as Pending
@@ -169,7 +169,7 @@ export default function OrderDetails() {
 
            <Button variant="destructive" className="w-full bg-red-100 text-red-600 hover:bg-red-200 border-none shadow-none" onClick={async () => {
                if(confirm("Delete this order permanently?")) {
-                  await db.deleteOrder(order.id);
+                  await deleteOrder(order.id);
                   window.history.back();
                }
              }}>

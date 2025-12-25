@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Search, Plus, MoreVertical, Package, UserPlus, X, User, Ruler } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { db } from "@/lib/db";
+import { getOrders, getCustomers, updateOrder, deleteOrder } from "@/lib/db";
 import { Link, useLocation } from "wouter";
 import { useState, useEffect, useRef } from "react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -20,12 +20,12 @@ export default function Home() {
 
   const { data: orders = [] } = useQuery({
     queryKey: ['orders'],
-    queryFn: () => db.getOrders()
+    queryFn: () => getOrders()
   });
 
   const { data: customers = [] } = useQuery({
     queryKey: ['customers'],
-    queryFn: () => db.getCustomers()
+    queryFn: () => getCustomers()
   });
 
   // Close dropdown when clicking outside
@@ -149,7 +149,7 @@ export default function Home() {
                                 </div>
                                 <div className="flex-1 min-w-0">
                                   <div className="text-sm font-medium truncate">{o.description}</div>
-                                  <div className="text-xs text-muted-foreground">{c?.name} • Due {new Date(o.deadline).toLocaleDateString()}</div>
+                                  <div className="text-xs text-muted-foreground">{c?.name} • Due {new Date(o.deadline).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</div>
                                 </div>
                                 <Badge variant="outline" className="text-[10px] h-5 px-1.5">
                                   {o.status}
@@ -258,7 +258,7 @@ export default function Home() {
                             <DropdownMenuItem 
                               className="text-green-600 focus:text-green-600"
                               onClick={async () => {
-                                await db.updateOrder(order.id, { status: 'completed' });
+                                await updateOrder(order.id, { status: 'completed' });
                                 queryClient.invalidateQueries({ queryKey: ['orders'] });
                               }}
                             >
@@ -268,7 +268,7 @@ export default function Home() {
                               className="text-destructive focus:text-destructive"
                               onClick={async () => {
                                 if (confirm("Delete this order?")) {
-                                  await db.deleteOrder(order.id);
+                                  await deleteOrder(order.id);
                                   queryClient.invalidateQueries({ queryKey: ['orders'] });
                                 }
                               }}

@@ -13,8 +13,7 @@ import AddEditCustomer from "@/pages/AddEditCustomer";
 import Orders from "@/pages/Orders";
 import OrderDetails from "@/pages/OrderDetails";
 import AddEditOrder from "@/pages/AddEditOrder";
-import Gallery from "@/pages/Gallery";
-import { db } from "@/lib/db";
+import { isSetupComplete } from "@/lib/db";
 import { useLocation } from "wouter";
 import { useEffect, useState } from "react";
 import Splash from "@/pages/Splash";
@@ -24,12 +23,20 @@ type AppState = 'install' | 'splash' | 'app';
 
 function Router() {
   const [location, setLocation] = useLocation();
+  const [setupChecked, setSetupChecked] = useState(false);
 
   useEffect(() => {
-    if (!db.isSetupComplete() && location !== "/setup") {
-      setLocation("/setup");
-    }
-  }, [location, setLocation]);
+    const check = async () => {
+      const complete = await isSetupComplete();
+      if (!complete && location !== "/setup") {
+        setLocation("/setup");
+      }
+      setSetupChecked(true);
+    };
+    if (!setupChecked) check();
+  }, [location, setLocation, setupChecked]);
+
+  if (!setupChecked) return <div>Loading...</div>;
 
   return (
     <Switch>
@@ -45,8 +52,6 @@ function Router() {
       <Route path="/orders/:id" component={OrderDetails} />
       <Route path="/add-order" component={AddEditOrder} />
       <Route path="/edit-order/:id" component={AddEditOrder} />
-      
-      <Route path="/gallery" component={Gallery} />
       
       <Route component={NotFound} />
     </Switch>

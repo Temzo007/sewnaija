@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Phone, MessageCircle, Pencil, Trash2, ArrowLeft, Ruler, Package } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { db } from "@/lib/db";
+import { getCustomer, getOrders } from "@/lib/db";
 import { useLocation, useRoute } from "wouter";
 import { formatPhoneForWhatsapp } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
@@ -18,15 +18,17 @@ export default function CustomerDetails() {
 
   const { data: customer } = useQuery({
     queryKey: ['customer', id],
-    queryFn: () => db.getCustomer(id!)
+    queryFn: () => getCustomer(id!)
   });
 
   const { data: orders = [] } = useQuery({
     queryKey: ['orders'],
-    queryFn: () => db.getOrdersByCustomer(id!)
+    queryFn: () => getOrders()
   });
 
   if (!customer) return null; // Or loading state
+
+  const customerOrders = orders.filter(o => o.customerId === customer.id);
 
   const whatsappLink = `https://wa.me/${formatPhoneForWhatsapp(customer.phone)}`;
 
@@ -88,7 +90,7 @@ export default function CustomerDetails() {
         <Tabs defaultValue="measurements" className="w-full">
           <TabsList className="w-full grid grid-cols-2">
             <TabsTrigger value="measurements">Measurements</TabsTrigger>
-            <TabsTrigger value="orders">Orders ({orders.length})</TabsTrigger>
+            <TabsTrigger value="orders">Orders ({customerOrders.length})</TabsTrigger>
           </TabsList>
 
           <TabsContent value="measurements" className="mt-4 space-y-4">
@@ -116,12 +118,12 @@ export default function CustomerDetails() {
             </div>
 
             <div className="space-y-3">
-              {orders.length === 0 ? (
+              {customerOrders.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground bg-muted/20 rounded-lg">
                   No orders yet
                 </div>
               ) : (
-                orders
+                customerOrders
                 .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
                 .map(order => (
                   <Card key={order.id} className="border-none shadow-sm overflow-hidden" onClick={() => setLocation(`/orders/${order.id}`)}>

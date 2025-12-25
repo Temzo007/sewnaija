@@ -6,13 +6,13 @@ import { Label } from "@/components/ui/label";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { db } from "@/lib/db";
+import { getCustomer, getDefaultMeasurements, updateCustomer, addCustomer } from "@/lib/db";
 import { useLocation, useRoute } from "wouter";
 import { ArrowLeft, Camera, Plus, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect, useState } from "react";
 import { DEFAULT_MEASUREMENTS } from "@/lib/types";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { queryClient } from "@/lib/queryClient";
 
 const schema = z.object({
@@ -52,7 +52,7 @@ export default function AddEditCustomer() {
 
   useEffect(() => {
     if (isEdit && params?.id) {
-      db.getCustomer(params.id).then(customer => {
+      getCustomer(params.id).then(customer => {
         if (customer) {
           setValue('name', customer.name);
           setValue('phone', customer.phone);
@@ -63,18 +63,21 @@ export default function AddEditCustomer() {
       });
     } else {
       // Load defaults from DB for new customers
-      const defaults = db.getDefaultMeasurements();
-      replace(defaults);
+      const loadDefaults = async () => {
+        const defaults = await getDefaultMeasurements();
+        replace(defaults);
+      };
+      loadDefaults();
     }
   }, [isEdit, params?.id, setValue, replace]);
 
   const onSubmit = async (data: FormData) => {
     try {
       if (isEdit && params?.id) {
-        await db.updateCustomer(params.id, { ...data, photo });
+        await updateCustomer(params.id, { ...data, photo });
         toast({ title: "Success", description: "Customer updated successfully" });
       } else {
-        await db.addCustomer({ ...data, photo });
+        await addCustomer({ ...data, photo });
         toast({ title: "Success", description: "Customer added successfully" });
       }
       queryClient.invalidateQueries({ queryKey: ['customers'] });
@@ -155,6 +158,9 @@ export default function AddEditCustomer() {
               <DialogContent>
                 <DialogHeader>
                   <DialogTitle>Add Custom Measurement</DialogTitle>
+                  <DialogDescription>
+                    Add a custom measurement for this customer.
+                  </DialogDescription>
                 </DialogHeader>
                 <div className="py-4">
                   <Input 

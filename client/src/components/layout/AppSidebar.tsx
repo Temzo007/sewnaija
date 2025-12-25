@@ -1,9 +1,9 @@
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
-import { Home, Users, Package, Image as ImageIcon, Sun, Moon, LogOut, Menu } from "lucide-react";
+import { Home, Users, Package, Sun, Moon, LogOut, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
-import { db } from "@/lib/db";
+import { getTheme, setTheme, getOrders } from "@/lib/db";
 import { useQuery } from "@tanstack/react-query";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
@@ -15,18 +15,22 @@ interface SidebarProps {
 
 export function AppSidebar({ open, setOpen }: SidebarProps) {
   const [location] = useLocation();
-  const [theme, setTheme] = useState<'light' | 'dark'>(db.getTheme());
+  const [theme, setThemeState] = useState<'light' | 'dark'>('light');
+
+  useEffect(() => {
+    getTheme().then(setThemeState);
+  }, []);
 
   const toggleTheme = () => {
     const newTheme = theme === 'light' ? 'dark' : 'light';
+    setThemeState(newTheme);
     setTheme(newTheme);
-    db.setTheme(newTheme);
   };
 
   // Get orders count for badges
   const { data: orders = [] } = useQuery({
     queryKey: ['orders'],
-    queryFn: () => db.getOrders()
+    queryFn: () => getOrders()
   });
 
   const pendingCount = orders.filter(o => o.status === 'pending').length;
@@ -37,8 +41,7 @@ export function AppSidebar({ open, setOpen }: SidebarProps) {
     
     return (
       <div className="flex flex-col gap-1">
-        <Link href={href}>
-          <a className={cn(
+        <Link href={href} className={cn(
             "flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors",
             isActive 
               ? "bg-primary text-primary-foreground shadow-md" 
@@ -56,8 +59,7 @@ export function AppSidebar({ open, setOpen }: SidebarProps) {
                 {badge}
               </span>
             )}
-          </a>
-        </Link>
+          </Link>
         
         {/* Sub-items logic for Orders if expanded (Optional, but request said dropdown) */}
       </div>
@@ -81,8 +83,7 @@ export function AppSidebar({ open, setOpen }: SidebarProps) {
         
         {/* Orders - Simplified as main link for now, but UI shows badges */}
         <div className="space-y-1">
-           <Link href="/orders">
-            <a className={cn(
+           <Link href="/orders" className={cn(
               "flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors",
               location === '/orders' 
                 ? "bg-primary text-primary-foreground shadow-md" 
@@ -102,15 +103,13 @@ export function AppSidebar({ open, setOpen }: SidebarProps) {
                   </span>
                  )}
               </div>
-            </a>
-          </Link>
+            </Link>
           {/* Sublinks for orders could go here if we want explicit dropdowns, 
               but the request says "dropdown -> Pending / Completed".
               Let's keep it simple for mobile: Main Orders page has tabs. 
           */}
         </div>
 
-        <NavItem href="/gallery" icon={ImageIcon} label="Gallery" />
       </div>
 
       <div className="p-4 border-t border-sidebar-border">

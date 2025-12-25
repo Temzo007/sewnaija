@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { db } from "@/lib/db";
+import { setDefaultMeasurements, setSetupComplete } from "@/lib/db";
 import { useLocation } from "wouter";
 import { useState } from "react";
 import { Plus, Trash2, CheckCircle2, Ruler } from "lucide-react";
@@ -16,9 +16,9 @@ export default function WelcomeSetup() {
   const [measurements, setMeasurements] = useState(INITIAL_DEFAULT_MEASUREMENTS);
   const [newMeasure, setNewMeasure] = useState("");
 
-  const handleSave = () => {
-    db.setDefaultMeasurements(measurements);
-    db.setSetupComplete(true);
+  const handleSave = async () => {
+    await setDefaultMeasurements(measurements);
+    await setSetupComplete(true);
     toast({ title: "Setup Complete", description: "Your tailoring preferences have been saved!" });
     setLocation("/");
   };

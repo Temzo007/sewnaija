@@ -1,33 +1,46 @@
 import { Layout } from "@/components/layout/Layout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MoreVertical, Calendar, User, CheckCircle2, Clock } from "lucide-react";
+import { MoreVertical, Calendar, User, CheckCircle2, Clock, Search, Plus } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { db } from "@/lib/db";
+import { getOrders, getCustomers, updateOrder, deleteOrder } from "@/lib/db";
 import { Link, useLocation } from "wouter";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { queryClient } from "@/lib/queryClient";
+import { Input } from "@/components/ui/input";
+import { useState } from "react";
 
 export default function Orders() {
   const [, setLocation] = useLocation();
+  const [searchQuery, setSearchQuery] = useState("");
 
   const { data: orders = [] } = useQuery({
     queryKey: ['orders'],
-    queryFn: () => db.getOrders()
+    queryFn: () => getOrders()
   });
 
   const { data: customers = [] } = useQuery({
     queryKey: ['customers'],
-    queryFn: () => db.getCustomers()
+    queryFn: () => getCustomers()
   });
 
-  const pendingOrders = orders
+  const filteredOrders = orders.filter(order => {
+    const customer = customers.find(c => c.id === order.customerId);
+    const searchLower = searchQuery.toLowerCase();
+    return (
+      order.description.toLowerCase().includes(searchLower) ||
+      customer?.name.toLowerCase().includes(searchLower) ||
+      order.status.toLowerCase().includes(searchLower)
+    );
+  });
+
+  const pendingOrders = filteredOrders
     .filter(o => o.status === 'pending')
     .sort((a, b) => new Date(a.deadline).getTime() - new Date(b.deadline).getTime());
     
-  const completedOrders = orders
+  const completedOrders = filteredOrders
     .filter(o => o.status === 'completed')
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()); // Newest completed first
 
@@ -75,7 +88,7 @@ export default function Orders() {
                     <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
                       <div className="flex items-center gap-1">
                         <Calendar className="w-3 h-3" />
-                        <span>Due: {new Date(order.deadline).toLocaleDateString()}</span>
+                        <span>Due: {new Date(order.deadline).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</span>
                       </div>
                     </div>
                   </div>
@@ -98,7 +111,7 @@ export default function Orders() {
                         <DropdownMenuItem 
                           className="text-green-600 focus:text-green-600"
                           onClick={async () => {
-                            await db.updateOrder(order.id, { status: 'completed' });
+                            await updateOrder(order.id, { status: 'completed' });
                             queryClient.invalidateQueries({ queryKey: ['orders'] });
                           }}
                         >
@@ -107,7 +120,7 @@ export default function Orders() {
                       ) : (
                         <DropdownMenuItem 
                           onClick={async () => {
-                            await db.updateOrder(order.id, { status: 'pending' });
+                            await updateOrder(order.id, { status: 'pending' });
                             queryClient.invalidateQueries({ queryKey: ['orders'] });
                           }}
                         >
@@ -119,7 +132,7 @@ export default function Orders() {
                         className="text-destructive focus:text-destructive"
                         onClick={async () => {
                           if (confirm("Delete this order?")) {
-                            await db.deleteOrder(order.id);
+                            await deleteOrder(order.id);
                             queryClient.invalidateQueries({ queryKey: ['orders'] });
                           }
                         }}
@@ -140,6 +153,17 @@ export default function Orders() {
   return (
     <Layout>
       <div className="p-4 max-w-4xl mx-auto pb-20">
+        {/* Search Bar */}
+        <div className="relative mb-4">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+          <Input
+            placeholder="Search orders by description, customer, or status..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+
         <Tabs defaultValue="pending" className="w-full">
           <TabsList className="grid w-full grid-cols-2 h-12 rounded-xl bg-muted/50 p-1">
             <TabsTrigger value="pending" className="rounded-lg data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all">
@@ -157,6 +181,15 @@ export default function Orders() {
             <OrderList list={completedOrders} />
           </TabsContent>
         </Tabs>
+
+        {/* FAB */}
+        <Button
+          size="icon"
+          className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg z-50"
+          onClick={() => setLocation('/add-order')}
+        >
+          <Plus className="w-6 h-6" />
+        </Button>
       </div>
     </Layout>
   );

@@ -27,19 +27,6 @@ export interface Order {
   createdAt: string;
 }
 
-export interface GalleryAlbum {
-  id: string;
-  name: string;
-  createdAt: string;
-}
-
-export interface GalleryItem {
-  id: string;
-  url: string;
-  albumId: string;
-  createdAt: string;
-}
-
 export type Theme = 'dark' | 'light';
 
 export const formatPhoneForWhatsapp = (phone: string): string => {

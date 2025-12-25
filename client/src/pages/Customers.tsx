@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Search, Plus, MoreVertical, Phone, ShoppingBag } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { db } from "@/lib/db";
+import { getCustomers, getOrders, deleteCustomer } from "@/lib/db";
 import { Link, useLocation } from "wouter";
 import { useState } from "react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -17,12 +17,12 @@ export default function Customers() {
 
   const { data: customers = [] } = useQuery({
     queryKey: ['customers'],
-    queryFn: () => db.getCustomers()
+    queryFn: () => getCustomers()
   });
 
   const { data: orders = [] } = useQuery({
     queryKey: ['orders'],
-    queryFn: () => db.getOrders()
+    queryFn: () => getOrders()
   });
 
   const filteredCustomers = customers.filter(c => 
@@ -99,7 +99,7 @@ export default function Customers() {
                             className="text-destructive focus:text-destructive"
                             onClick={async () => {
                               if (confirm(`Delete ${customer.name}?`)) {
-                                await db.deleteCustomer(customer.id);
+                                await deleteCustomer(customer.id);
                                 queryClient.invalidateQueries({ queryKey: ['customers'] });
                               }
                             }}

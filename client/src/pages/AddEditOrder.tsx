@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { db } from "@/lib/db";
+import { getCustomers, getOrder, updateOrder, addOrder } from "@/lib/db";
 import { useLocation, useRoute } from "wouter";
 import { ArrowLeft, Camera, Plus, Trash2, Calendar as CalendarIcon, Image as ImageIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -19,7 +19,7 @@ import { format } from "date-fns";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Check, Grid2X2 } from "lucide-react";
 import { queryClient } from "@/lib/queryClient";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useQuery } from "@tanstack/react-query";
 
@@ -49,7 +49,6 @@ export default function AddEditOrder() {
   const [materials, setMaterials] = useState<string[]>([]);
   const [styles, setStyles] = useState<string[]>([]);
   const [showImageSourceModal, setShowImageSourceModal] = useState<'material' | 'style' | null>(null);
-  const [showAppGallery, setShowAppGallery] = useState(false);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
@@ -57,12 +56,6 @@ export default function AddEditOrder() {
   
   // Combobox state
   const [openCombobox, setOpenCombobox] = useState(false);
-
-  // Query gallery items
-  const { data: gallery = [] } = useQuery({
-    queryKey: ['gallery'],
-    queryFn: () => db.getGallery()
-  });
 
   const { register, handleSubmit, control, setValue, watch, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -82,10 +75,10 @@ export default function AddEditOrder() {
   const selectedDate = watch("deadline");
 
   useEffect(() => {
-    db.getCustomers().then(setCustomers);
+    getCustomers().then(setCustomers);
 
     if (isEdit && params?.id) {
-      db.getOrder(params.id).then(order => {
+      getOrder(params.id).then(order => {
         if (order) {
           setValue('description', order.description);
           setValue('customerId', order.customerId);
@@ -110,10 +103,10 @@ export default function AddEditOrder() {
       };
 
       if (isEdit && params?.id) {
-        await db.updateOrder(params.id, payload);
+        await updateOrder(params.id, payload);
         toast({ title: "Success", description: "Order updated successfully" });
       } else {
-        await db.addOrder(payload);
+        await addOrder(payload);
         toast({ title: "Success", description: "Order added successfully" });
       }
       queryClient.invalidateQueries({ queryKey: ['orders'] });
@@ -151,18 +144,7 @@ export default function AddEditOrder() {
       cameraInputRef.current?.click();
     } else if (source === 'phone') {
       fileInputRef.current?.click();
-    } else if (source === 'app') {
-      setShowAppGallery(true);
     }
-  };
-
-  const addImageFromGallery = (url: string) => {
-    if (currentImageType.current === 'material') {
-      setMaterials(prev => [...prev, url]);
-    } else {
-      setStyles(prev => [...prev, url]);
-    }
-    setShowAppGallery(false);
   };
 
   return (
@@ -314,6 +296,9 @@ export default function AddEditOrder() {
                  <DialogContent className="w-80">
                    <DialogHeader>
                      <DialogTitle>Add Material Photo</DialogTitle>
+                     <DialogDescription>
+                       Choose how to add a photo of the material.
+                     </DialogDescription>
                    </DialogHeader>
                    <div className="space-y-2">
                      <Button variant="outline" className="w-full h-12 gap-2" onClick={() => handleImageSourceSelection('camera')}>
@@ -352,11 +337,11 @@ export default function AddEditOrder() {
                  <DialogContent className="w-80">
                    <DialogHeader>
                      <DialogTitle>Add Style Image</DialogTitle>
+                     <DialogDescription>
+                       Choose how to add a style image.
+                     </DialogDescription>
                    </DialogHeader>
                    <div className="space-y-2">
-                     <Button variant="outline" className="w-full h-12 gap-2" onClick={() => handleImageSourceSelection('app')}>
-                       <Grid2X2 className="w-4 h-4" /> App Gallery
-                     </Button>
                      <Button variant="outline" className="w-full h-12 gap-2" onClick={() => handleImageSourceSelection('phone')}>
                        <ImageIcon className="w-4 h-4" /> Phone Gallery
                      </Button>
@@ -380,34 +365,6 @@ export default function AddEditOrder() {
              </div>
            </div>
         </div>
-
-        {/* App Gallery Modal */}
-        <Dialog open={showAppGallery} onOpenChange={setShowAppGallery}>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Select from App Gallery</DialogTitle>
-            </DialogHeader>
-            <ScrollArea className="h-[400px]">
-              <div className="grid grid-cols-3 gap-3 p-4">
-                {gallery.length === 0 ? (
-                  <div className="col-span-3 text-center py-8 text-muted-foreground">
-                    No images in gallery
-                  </div>
-                ) : (
-                  gallery.map(item => (
-                    <div 
-                      key={item.id}
-                      className="aspect-square rounded-lg overflow-hidden cursor-pointer hover:opacity-75 transition-opacity border"
-                      onClick={() => addImageFromGallery(item.url)}
-                    >
-                      <img src={item.url} className="w-full h-full object-cover" />
-                    </div>
-                  ))
-                )}
-              </div>
-            </ScrollArea>
-          </DialogContent>
-        </Dialog>
 
         {/* Hidden file inputs */}
         <input 
