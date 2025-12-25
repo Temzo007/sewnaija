@@ -25,7 +25,7 @@ export default defineConfig({
         ]
       : []),
   ],
-  base: '/sewnaija/',
+  base: '/',
   resolve: {
     alias: {
       "@": path.resolve(import.meta.dirname, "client", "src"),
