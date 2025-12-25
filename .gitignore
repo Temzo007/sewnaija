@@ -4,9 +4,8 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# Build outputs
+# Build outputs (keep dist/ for local builds)
 dist/
-build/
 
 # Environment variables
 .env
