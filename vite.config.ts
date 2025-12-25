@@ -25,7 +25,7 @@ export default defineConfig({
         ]
       : []),
   ],
-  base: process.env.GITHUB_PAGES ? '/sewnaija/' : '/',
+  base: '/sewnaija/',
   resolve: {
     alias: {
       "@": path.resolve(import.meta.dirname, "client", "src"),
