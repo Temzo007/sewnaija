@@ -7,6 +7,7 @@ import { metaImagesPlugin } from "./vite-plugin-meta-images";
 // import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
+  base: "/sewnaija/",
   plugins: [
     react(),
     runtimeErrorOverlay(),
@@ -25,7 +26,6 @@ export default defineConfig({
         ]
       : []),
   ],
-  base: '/',
   resolve: {
     alias: {
       "@": path.resolve(import.meta.dirname, "client", "src"),
