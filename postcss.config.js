@@ -5,8 +5,8 @@ export default {
   },
 }
 module.exports = {
-  plugins: [
-    require('@tailwindcss/postcss'), // <- instead of require('tailwindcss')
-    require('autoprefixer'),
-  ],
+  plugins: {
+    tailwindcss: {},
+    autoprefixer: {},
+  },
 };
