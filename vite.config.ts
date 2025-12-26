@@ -4,12 +4,37 @@ import tailwindcss from "@tailwindcss/vite";
 import path from "path";
 import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
 import { metaImagesPlugin } from "./vite-plugin-meta-images";
-// import { VitePWA } from 'vite-plugin-pwa';
+import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
   base: "/sewnaija/",
   plugins: [
     react(),
+    VitePWA({
+    registerType: "autoUpdate",
+    includeAssets: ["favicon.ico"],
+    manifest: {
+      name: "SewNaija",
+      short_name: "SewNaija",
+      start_url: "/sewnaija/",
+      scope: "/sewnaija/",
+      display: "standalone",
+      background_color: "#ffffff",
+      theme_color: "#ffffff",
+      icons: [
+        {
+          src: "/sewnaija/pwa-192x192.png",
+          sizes: "192x192",
+          type: "image/png"
+        },
+        {
+          src: "/sewnaija/pwa-512x512.png",
+          sizes: "512x512",
+          type: "image/png"
+        }
+      ]
+    }
+  }),
     runtimeErrorOverlay(),
     tailwindcss(),
     metaImagesPlugin(),
