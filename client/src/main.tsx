@@ -5,7 +5,7 @@ import "./index.css";
 
 const root = document.getElementById("root");
 
-if (root) {
+if (root) { 
   createRoot(root).render(
     <HashRouter>
       <App />
