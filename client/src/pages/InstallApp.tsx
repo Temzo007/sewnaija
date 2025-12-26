@@ -1,8 +1,9 @@
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Download, Smartphone, CheckCircle2 } from "lucide-react";
 import logo from "@assets/generated_images/sewnaija_app_logo_icon.png";
-import { useState, useEffect } from "react";
+
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -52,10 +53,8 @@ export default function InstallApp({ onInstalled }: { onInstalled: () => void })
         setIsInstalling(false);
       }
     } else {
-      // No prompt available - might already be installed or not supported
-      // Just proceed to app
-      onInstalled();
-    }
+  alert("Install not ready yet. Please wait a moment and try again.");
+}
   };
 
   const handleSkip = () => {
@@ -156,27 +155,22 @@ export default function InstallApp({ onInstalled }: { onInstalled: () => void })
             transition={{ delay: 1.2, duration: 0.5 }}
             className="w-full space-y-3"
           >
-            <Button 
-              onClick={handleInstall} 
-              className="w-full h-14 text-lg font-semibold shadow-lg gap-2"
-              disabled={isInstalling}
-            >
-              {isInstalling ? (
-                <>Installing...</>
-              ) : (
-                <>
-                  <Download className="w-5 h-5" />
-                  Install App
-                </>
-              )}
-            </Button>
+         <Button
+  onClick={handleInstall}
+  disabled={isInstalling}
+  className="w-full"
+>
+  {isInstalling ? "Installing..." : "Install App"}
+</Button>
+
+
             
             <Button 
               onClick={handleSkip} 
               variant="ghost" 
               className="w-full text-muted-foreground"
             >
-              Continue in browser
+              __________________
             </Button>
           </motion.div>
         )}
