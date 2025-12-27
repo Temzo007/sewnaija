@@ -9,7 +9,6 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
 }
 
-// Detect standalone (installed) mode
 const isStandalone = () =>
   window.matchMedia("(display-mode: standalone)").matches ||
   (window.navigator as any).standalone === true;
@@ -27,7 +26,6 @@ export default function InstallApp({
   const [installed, setInstalled] = useState(false);
 
   useEffect(() => {
-    // ✅ Skip install screen if app is already installed
     if (isStandalone()) {
       onInstalled();
       return;
@@ -60,9 +58,7 @@ export default function InstallApp({
     }
 
     if (!deferredPrompt) {
-      alert(
-        "Install is not available right now. You can continue in the browser or add the app to your home screen."
-      );
+      alert("Install not available. Continuing in browser.");
       onInstalled();
       return;
     }
@@ -75,40 +71,23 @@ export default function InstallApp({
       if (outcome === "accepted") {
         setInstalled(true);
       } else {
-        alert(
-          "Installation was cancelled. You can continue using SewNaija in the browser."
-        );
         onInstalled();
       }
     } catch {
-      alert(
-        "Installation failed. Please add the app to your home screen manually."
-      );
       onInstalled();
     } finally {
       setIsInstalling(false);
     }
   };
 
-  const handleSkip = () => {
-    onInstalled();
-  };
-
-  // ✅ App Installed Screen
   if (installed) {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-background">
-        <div className="text-center space-y-6">
-          <CheckCircle2 className="w-16 h-16 text-primary mx-auto" />
-          <h1 className="text-2xl font-bold">App Installed</h1>
-          <p className="text-muted-foreground">
-            SewNaija has been installed successfully.
-          </p>
-          <Button
-            className="w-full"
-            onClick={() => (window.location.href = "/")}
-          >
-            Open SewNaija App
+      <div className="fixed inset-0 flex items-center justify-center bg-background">
+        <div className="text-center space-y-4">
+          <CheckCircle2 className="w-16 h-16 mx-auto text-primary" />
+          <h2 className="text-xl font-bold">App Installed</h2>
+          <Button onClick={() => (window.location.href = "/")}>
+            Open App
           </Button>
         </div>
       </div>
@@ -116,21 +95,60 @@ export default function InstallApp({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-background p-6">
+    <div className="fixed inset-0 flex items-center justify-center bg-background p-6">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex flex-col items-center gap-6 max-w-sm text-center"
+        className="max-w-sm w-full text-center space-y-6"
       >
-        {/* Logo */}
-        <div className="w-28 h-28 rounded-3xl overflow-hidden shadow-xl">
-          <img src={logo} alt="SewNaija Logo" />
-        </div>
+        <img
+          src={logo}
+          alt="SewNaija"
+          className="w-24 h-24 mx-auto rounded-2xl shadow"
+        />
 
-        <h1 className="text-3xl font-bold text-primary">SewNaija</h1>
+        <h1 className="text-2xl font-bold">SewNaija</h1>
         <p className="text-muted-foreground text-sm">
           Fashion Design Manager
         </p>
 
-        {/* iOS Instructions */}
-        {
+        {showIOSInstructions ? (
+          <div className="bg-muted p-4 rounded-lg text-sm space-y-2">
+            <p className="font-semibold">Install on iOS:</p>
+            <ol className="list-decimal list-inside text-left">
+              <li>Tap Share</li>
+              <li>Select “Add to Home Screen”</li>
+              <li>Tap Add</li>
+            </ol>
+            <Button onClick={onInstalled} className="w-full mt-2">
+              Continue
+            </Button>
+          </div>
+        ) : (
+          <>
+            <Button
+              onClick={handleInstall}
+              disabled={isInstalling}
+              className="w-full"
+            >
+              {isInstalling ? "Installing..." : "Install App"}
+            </Button>
+
+            <Button
+              variant="ghost"
+              onClick={onInstalled}
+              className="w-full"
+            >
+              Continue in Browser
+            </Button>
+          </>
+        )}
+
+        <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground">
+          <Smartphone className="w-3 h-3" />
+          Best experience when installed
+        </div>
+      </motion.div>
+    </div>
+  );
+}
