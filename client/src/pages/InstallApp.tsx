@@ -1,174 +1,194 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, Smartphone } from "lucide-react";
+import { Download, Smartphone, CheckCircle2 } from "lucide-react";
 import logo from "@assets/generated_images/sewnaija_app_logo_icon.png";
 
-/* ---------- Types ---------- */
 interface BeforeInstallPromptEvent extends Event {
-  prompt: () => Promise<void>;
-  userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
+prompt: () => Promise<void>;
+userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
 }
 
-/* ---------- Helpers ---------- */
-const isStandalone = () =>
-  window.matchMedia("(display-mode: standalone)").matches ||
-  (window.navigator as any).standalone === true;
+export default function InstallApp({ onInstalled }: { onInstalled: () => void }) {
+const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+const [isInstalling, setIsInstalling] = useState(false);
+const [isIOS, setIsIOS] = useState(false);
+const [showIOSInstructions, setShowIOSInstructions] = useState(false);
 
-export default function InstallApp({
-  onInstalled,
-}: {
-  onInstalled: () => void;
-}) {
-  const [deferredPrompt, setDeferredPrompt] =
-    useState<BeforeInstallPromptEvent | null>(null);
-  const [isInstalling, setIsInstalling] = useState(false);
-  const [isIOS, setIsIOS] = useState(false);
-  const [showIOSHelp, setShowIOSHelp] = useState(false);
-  const [installed, setInstalled] = useState(false);
+useEffect(() => {
+// Check if iOS
+const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent);
+setIsIOS(isIOSDevice);
 
-  /* ---------- On Mount ---------- */
-  useEffect(() => {
-    // If already installed → skip
-    if (isStandalone()) {
-      onInstalled();
-      return;
-    }
+// Listen for install prompt  
+const handler = (e: Event) => {  
+  e.preventDefault();  
+  setDeferredPrompt(e as BeforeInstallPromptEvent);  
+};  
 
-    // iOS detect
-    setIsIOS(/iPad|iPhone|iPod/.test(navigator.userAgent));
+window.addEventListener('beforeinstallprompt', handler);  
 
-    // Capture install prompt
-    const handler = (e: Event) => {
-      e.preventDefault();
-      setDeferredPrompt(e as BeforeInstallPromptEvent);
-    };
+return () => window.removeEventListener('beforeinstallprompt', handler);
 
-    window.addEventListener("beforeinstallprompt", handler);
+}, []);
 
-    // Detect successful install
-    window.addEventListener("appinstalled", () => {
-      setInstalled(true);
-    });
+const handleInstall = async () => {
+if (isIOS) {
+setShowIOSInstructions(true);
+return;
+}
 
-    return () => {
-      window.removeEventListener("beforeinstallprompt", handler);
-    };
-  }, []);
+if (deferredPrompt) {  
+  setIsInstalling(true);  
+  deferredPrompt.prompt();  
+  const { outcome } = await deferredPrompt.userChoice;  
+    
+  if (outcome === 'accepted') {  
+    setDeferredPrompt(null);  
+    // Wait a moment then proceed  
+    setTimeout(() => {  
+      onInstalled();  
+    }, 1000);  
+  } else {  
+    setIsInstalling(false);  
+  }  
+} else {
 
-  /* ---------- Install ---------- */
-  const handleInstall = async () => {
-    if (isIOS) {
-      setShowIOSHelp(true);
-      return;
-    }
+alert("Install not ready yet. Please wait a moment and try again.");
+}
+};
 
-    if (!deferredPrompt) {
-      alert(
-        "Install is not available right now. You can add the app to your home screen manually."
-      );
-      setShowIOSHelp(true);
-      setTimeout(onInstalled, 500);
-      return;
-    }
+const handleSkip = () => {
+onInstalled();
+};
 
-    setIsInstalling(true);
-    deferredPrompt.prompt();
+return (
+<div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-gradient-to-b from-primary/5 to-background text-foreground p-6">
+<motion.div
+initial={{ opacity: 0, y: 20 }}
+animate={{ opacity: 1, y: 0 }}
+transition={{ duration: 0.6, ease: "easeOut" }}
+className="flex flex-col items-center gap-8 max-w-sm text-center"
+>
+{/* Logo */}
+<motion.div
+initial={{ scale: 0.8 }}
+animate={{ scale: 1 }}
+transition={{ delay: 0.2, duration: 0.5 }}
+className="w-28 h-28 rounded-3xl overflow-hidden shadow-2xl border-4 border-white/50"
+>
+<img src={logo} alt="SewNaija Logo" className="w-full h-full object-cover" />
+</motion.div>
 
-    const { outcome } = await deferredPrompt.userChoice;
+{/* App Info */}  
+    <div className="space-y-3">  
+      <motion.h1   
+        initial={{ opacity: 0 }}  
+        animate={{ opacity: 1 }}  
+        transition={{ delay: 0.4, duration: 0.5 }}  
+        className="text-4xl font-heading font-bold text-primary tracking-tight"  
+      >  
+        SewNaija  
+      </motion.h1>  
+      <motion.p   
+        initial={{ opacity: 0 }}  
+        animate={{ opacity: 1 }}  
+        transition={{ delay: 0.6, duration: 0.5 }}  
+        className="text-muted-foreground text-sm"  
+      >  
+        Fashion Design Manager  
+      </motion.p>  
+      <motion.p   
+        initial={{ opacity: 0 }}  
+        animate={{ opacity: 1 }}  
+        transition={{ delay: 0.8, duration: 0.5 }}  
+        className="text-xs text-muted-foreground/70 font-medium uppercase tracking-widest"  
+      >  
+        by Temzo007  
+      </motion.p>  
+    </div>  
 
-    if (outcome === "accepted") {
-      setInstalled(true);
-      setDeferredPrompt(null);
-    } else {
-      alert(
-        "Install was cancelled. You can still continue using the app in your browser."
-      );
-      onInstalled();
-    }
+    {/* Features */}  
+    <motion.div   
+      initial={{ opacity: 0 }}  
+      animate={{ opacity: 1 }}  
+      transition={{ delay: 1, duration: 0.5 }}  
+      className="flex flex-col gap-2 text-sm text-left w-full bg-card/50 rounded-xl p-4 border"  
+    >  
+      <div className="flex items-center gap-2">  
+        <CheckCircle2 className="w-4 h-4 text-primary" />  
+        <span>Manage customers & orders</span>  
+      </div>  
+      <div className="flex items-center gap-2">  
+        <CheckCircle2 className="w-4 h-4 text-primary" />  
+        <span>Track measurements & styles</span>  
+      </div>  
+      <div className="flex items-center gap-2">  
+        <CheckCircle2 className="w-4 h-4 text-primary" />  
+        <span>Works 100% offline</span>  
+      </div>  
+    </motion.div>  
 
-    setIsInstalling(false);
-  };
+    {/* iOS Instructions */}  
+    {showIOSInstructions && (  
+      <motion.div  
+        initial={{ opacity: 0, height: 0 }}  
+        animate={{ opacity: 1, height: 'auto' }}  
+        className="bg-secondary/20 rounded-xl p-4 text-sm space-y-2"  
+      >  
+        <p className="font-semibold text-secondary-foreground">To install on iPhone/iPad:</p>  
+        <ol className="text-left text-muted-foreground space-y-1 list-decimal list-inside">  
+          <li>Tap the Share button in Safari</li>  
+          <li>Scroll down and tap "Add to Home Screen"</li>  
+          <li>Tap "Add" to confirm</li>  
+        </ol>  
+        <Button onClick={handleSkip} variant="secondary" className="w-full mt-3">  
+          Continue to App  
+        </Button>  
+      </motion.div>  
+    )}  
 
-  /* ---------- Open App ---------- */
-  const openApp = () => {
-    window.location.href = import.meta.env.BASE_URL;
-  };
+    {/* Install Button */}  
+    {!showIOSInstructions && (  
+      <motion.div  
+        initial={{ opacity: 0, y: 10 }}  
+        animate={{ opacity: 1, y: 0 }}  
+        transition={{ delay: 1.2, duration: 0.5 }}  
+        className="w-full space-y-3"  
+      >  
+     <Button
 
-  /* ---------- INSTALLED SCREEN ---------- */
-  if (installed) {
-    return (
-      <div className="fixed inset-0 flex items-center justify-center bg-background">
-        <div className="text-center space-y-6">
-          <CheckCircle2 className="w-16 h-16 text-primary mx-auto" />
-          <h1 className="text-2xl font-bold">App Installed</h1>
-          <Button onClick={openApp} className="w-full">
-            Open SewNaija
-          </Button>
-        </div>
-      </div>
-    );
-  }
+onClick={handleInstall}
+disabled={isInstalling}
+className="w-full"
 
-  /* ---------- INSTALL SCREEN ---------- */
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-b from-primary/5 to-background p-6">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="max-w-sm w-full space-y-6 text-center"
-      >
-        <img
-          src={logo}
-          alt="SewNaija"
-          className="w-24 h-24 mx-auto rounded-2xl shadow-lg"
-        />
+> 
 
-        <h1 className="text-3xl font-bold text-primary">SewNaija</h1>
-        <p className="text-muted-foreground text-sm">
-          Fashion Design Manager (Works 100% Offline)
-        </p>
+{isInstalling ? "Installing..." : "Install App"}
+</Button>
 
-        {/* iOS Instructions */}
-        {showIOSHelp && (
-          <div className="bg-card border rounded-xl p-4 text-sm text-left space-y-2">
-            <p className="font-semibold">Install on iPhone / iPad:</p>
-            <ol className="list-decimal list-inside text-muted-foreground space-y-1">
-              <li>Open in Safari</li>
-              <li>Tap Share</li>
-              <li>Add to Home Screen</li>
-            </ol>
-            <Button onClick={onInstalled} className="w-full mt-3">
-              Continue in Browser
-            </Button>
-          </div>
-        )}
+<Button   
+          onClick={handleSkip}   
+          variant="ghost"   
+          className="w-full text-muted-foreground"  
+        >  
+          Continue in Browser  
+        </Button>  
+      </motion.div>  
+    )}  
+  </motion.div>  
 
-        {!showIOSHelp && (
-          <>
-            <Button
-              onClick={handleInstall}
-              disabled={isInstalling}
-              className="w-full"
-            >
-              {isInstalling ? "Installing..." : "Install App"}
-            </Button>
+  {/* Bottom Decoration */}  
+  <motion.div   
+    initial={{ opacity: 0 }}  
+    animate={{ opacity: 1 }}  
+    transition={{ delay: 1.5 }}  
+    className="absolute bottom-6 flex items-center gap-2 text-xs text-muted-foreground/50"  
+  >  
+    <Smartphone className="w-3 h-3" />  
+    <span>Works best when installed</span>  
+  </motion.div>  
+</div>
 
-            <Button
-              variant="ghost"
-              onClick={onInstalled}
-              className="w-full text-muted-foreground"
-            >
-              Continue in Browser
-            </Button>
-          </>
-        )}
-
-        <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
-          <Smartphone className="w-3 h-3" />
-          Works best when installed
-        </div>
-      </motion.div>
-    </div>
-  );
+);
 }
