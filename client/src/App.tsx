@@ -1,3 +1,4 @@
+
 import { Switch, Route } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -18,9 +19,8 @@ import { useLocation } from "wouter";
 import { useEffect, useState } from "react";
 import Splash from "@/pages/Splash";
 import InstallApp from "@/pages/InstallApp";
-import PinLockScreen from "@/components/PinLockScreen";  // 👈 NEW
 
-type AppState = 'pin' | 'install' | 'splash' | 'app';   // 👈 Added 'pin'
+type AppState = 'install' | 'splash' | 'app';
 
 function Router() {
   const [location, setLocation] = useLocation();
@@ -61,38 +61,24 @@ function Router() {
 
 function App() {
   const [appState, setAppState] = useState<AppState>(() => {
-    // 👇 NEW: Check if app has been unlocked before
-    const isUnlocked = localStorage.getItem('app_unlocked') === 'true';
-    if (!isUnlocked) {
-      return 'pin';
-    }
-
-    // Original logic below (same as before)
+    // Check if running as installed PWA (standalone mode)
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches 
       || (window.navigator as any).standalone === true;
+    
+    // Check if user has already seen install page this session
     const hasSeenInstall = sessionStorage.getItem('sewnaija_seen_install') === 'true';
     
-    if (isStandalone || hasSeenInstall) {
+    if (isStandalone) {
+      // Running as installed app - show splash
       return 'splash';
-    }
-    return 'install';
-  });
-
-  const handleUnlock = () => {
-    // After PIN is correct, unlock and proceed to next appropriate state
-    localStorage.setItem('app_unlocked', 'true');
-    
-    // Determine next state (same logic as initial)
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches 
-      || (window.navigator as any).standalone === true;
-    const hasSeenInstall = sessionStorage.getItem('sewnaija_seen_install') === 'true';
-    
-    if (isStandalone || hasSeenInstall) {
-      setAppState('splash');
+    } else if (hasSeenInstall) {
+      // Already seen install page in browser - show splash
+      return 'splash';
     } else {
-      setAppState('install');
+      // First visit in browser - show install page
+      return 'install';
     }
-  };
+  });
 
   const handleInstalled = () => {
     sessionStorage.setItem('sewnaija_seen_install', 'true');
@@ -107,9 +93,6 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
-        {appState === 'pin' && (
-          <PinLockScreen onUnlock={handleUnlock} />
-        )}
         {appState === 'install' && (
           <InstallApp onInstalled={handleInstalled} />
         )}
