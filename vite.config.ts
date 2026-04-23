@@ -6,7 +6,7 @@ import { VitePWA } from "vite-plugin-pwa";
 import { metaImagesPlugin } from "./vite-plugin-meta-images";
 
 export default defineConfig({
-  base: "/sewnaija/",
+  base: "/",
 
   plugins: [
     react(),
