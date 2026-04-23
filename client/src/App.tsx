@@ -18,8 +18,9 @@ import { useLocation } from "wouter";
 import { useEffect, useState } from "react";
 import Splash from "@/pages/Splash";
 import InstallApp from "@/pages/InstallApp";
+import PinLockScreen from "@/components/PinLockScreen";
 
-type AppState = 'install' | 'splash' | 'app';
+type AppState = 'install' | 'pin' | 'splash' | 'app';
 
 function Router() {
   const [location, setLocation] = useLocation();
@@ -60,32 +61,42 @@ function Router() {
 
 function App() {
   const [appState, setAppState] = useState<AppState>(() => {
-    // Check if running as installed PWA (standalone mode)
+    // Check if already unlocked
+    const unlocked = localStorage.getItem('app_unlocked') === 'true';
+    if (!unlocked) {
+      return 'pin'; // Always force PIN if not unlocked
+    }
+
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches 
       || (window.navigator as any).standalone === true;
-    
-    // Check if user has already seen install page this session
     const hasSeenInstall = sessionStorage.getItem('sewnaija_seen_install') === 'true';
     
-    if (isStandalone) {
-      // Running as installed app - show splash
+    if (isStandalone || hasSeenInstall) {
       return 'splash';
-    } else if (hasSeenInstall) {
-      // Already seen install page in browser - show splash
-      return 'splash';
-    } else {
-      // First visit in browser - show install page
-      return 'install';
     }
+    return 'install';
   });
 
   const handleInstalled = () => {
     sessionStorage.setItem('sewnaija_seen_install', 'true');
-    setAppState('splash');
+    setAppState('pin'); // Go to PIN after install
   };
 
   const handleSplashComplete = () => {
     setAppState('app');
+  };
+
+  const handleUnlock = () => {
+    // After unlock, check if we need to show install/splash
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches 
+      || (window.navigator as any).standalone === true;
+    const hasSeenInstall = sessionStorage.getItem('sewnaija_seen_install') === 'true';
+
+    if (!isStandalone && !hasSeenInstall) {
+      setAppState('install');
+    } else {
+      setAppState('splash');
+    }
   };
 
   return (
@@ -94,6 +105,9 @@ function App() {
         <Toaster />
         {appState === 'install' && (
           <InstallApp onInstalled={handleInstalled} />
+        )}
+        {appState === 'pin' && (
+          <PinLockScreen onUnlock={handleUnlock} />
         )}
         {appState === 'splash' && (
           <Splash onComplete={handleSplashComplete} />
