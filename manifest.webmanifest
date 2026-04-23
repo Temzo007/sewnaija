@@ -1,8 +1,8 @@
 {
   "name": "SewNaija",
   "short_name": "SewNaija",
-  "start_url": "/sewnaija/",
-  "scope": "/sewnaija/",
+  "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#000000",
