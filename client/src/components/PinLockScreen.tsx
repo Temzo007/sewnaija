@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { validateTimePin } from '@/utils/timePin';
+import { validatePin } from '@/utils/timePin';        // ← changed
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -20,7 +20,7 @@ export default function PinLockScreen({ onUnlock }: PinLockScreenProps) {
     e.preventDefault();
     setLoading(true);
     setTimeout(() => {
-      if (validateTimePin(pin)) {
+      if (validatePin(pin)) {               // ← changed
         localStorage.setItem('app_unlocked', 'true');
         onUnlock();
       } else {
@@ -51,14 +51,14 @@ export default function PinLockScreen({ onUnlock }: PinLockScreenProps) {
                   type="text"
                   inputMode="numeric"
                   pattern="[0-9]*"
-                  maxLength={6}
+                  maxLength={6}                      // ← changed
                   value={pin}
                   onChange={(e) => {
                     setPin(e.target.value.replace(/\D/g, ''));
                     setError(false);
                   }}
                   className="text-center text-2xl tracking-[0.25em] h-14"
-                  placeholder="••••••"
+                  placeholder="••••••"                // ← changed
                   autoFocus
                   disabled={loading}
                 />
@@ -71,7 +71,7 @@ export default function PinLockScreen({ onUnlock }: PinLockScreenProps) {
               <Button
                 type="submit"
                 className="w-full h-12 text-lg font-semibold"
-                disabled={pin.length !== 10 || loading}
+                disabled={pin.length !== 6 || loading}   // ← changed
               >
                 {loading ? 'Verifying...' : 'Unlock'}
               </Button>
