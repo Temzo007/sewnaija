@@ -18,9 +18,9 @@ import { useLocation } from "wouter";
 import { useEffect, useState } from "react";
 import Splash from "@/pages/Splash";
 import InstallApp from "@/pages/InstallApp";
+import PinLockScreen from "@/components/PinLockScreen"; // 👈 added
 
-
-type AppState = 'install' | 'splash' | 'app';
+type AppState = 'pin' | 'install' | 'splash' | 'app'; // 👈 added 'pin'
 
 function Router() {
   const [location, setLocation] = useLocation();
@@ -43,17 +43,17 @@ function Router() {
     <Switch>
       <Route path="/setup" component={WelcomeSetup} />
       <Route path="/" component={Home} />
-
+      
       <Route path="/customers" component={Customers} />
       <Route path="/customers/:id" component={CustomerDetails} />
       <Route path="/add-customer" component={AddEditCustomer} />
       <Route path="/edit-customer/:id" component={AddEditCustomer} />
-
+      
       <Route path="/orders" component={Orders} />
       <Route path="/orders/:id" component={OrderDetails} />
       <Route path="/add-order" component={AddEditOrder} />
       <Route path="/edit-order/:id" component={AddEditOrder} />
-
+      
       <Route component={NotFound} />
     </Switch>
   );
@@ -61,30 +61,32 @@ function Router() {
 
 function App() {
   const [appState, setAppState] = useState<AppState>(() => {
-    // Check if running as installed PWA (standalone mode)
+    // 👇 NEW: Check PIN unlock first
+    const isUnlocked = localStorage.getItem('app_unlocked') === 'true';
+    if (!isUnlocked) return 'pin';
 
-
-
-
-
+    // Original logic below
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches 
       || (window.navigator as any).standalone === true;
-    
-    // Check if user has already seen install page this session
     const hasSeenInstall = sessionStorage.getItem('sewnaija_seen_install') === 'true';
-
-    if (isStandalone) {
-      // Running as installed app - show splash
-      return 'splash';
-    } else if (hasSeenInstall) {
-      // Already seen install page in browser - show splash
-      return 'splash';
-    } else {
-      // First visit in browser - show install page
-      return 'install';
-    }
-
+    
+    if (isStandalone || hasSeenInstall) return 'splash';
+    return 'install';
   });
+
+  const handleUnlock = () => {
+    localStorage.setItem('app_unlocked', 'true');
+    // After unlocking, decide next state just like initial load
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches 
+      || (window.navigator as any).standalone === true;
+    const hasSeenInstall = sessionStorage.getItem('sewnaija_seen_install') === 'true';
+    
+    if (isStandalone || hasSeenInstall) {
+      setAppState('splash');
+    } else {
+      setAppState('install');
+    }
+  };
 
   const handleInstalled = () => {
     sessionStorage.setItem('sewnaija_seen_install', 'true');
@@ -95,29 +97,16 @@ function App() {
     setAppState('app');
   };
 
-
-
-
-
-
-
-
-
-
-
-
-
-
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
+        {appState === 'pin' && (
+          <PinLockScreen onUnlock={handleUnlock} />
+        )}
         {appState === 'install' && (
           <InstallApp onInstalled={handleInstalled} />
         )}
-
-
-
         {appState === 'splash' && (
           <Splash onComplete={handleSplashComplete} />
         )}
