@@ -51,7 +51,7 @@ export default function PinLockScreen({ onUnlock }: PinLockScreenProps) {
                   type="text"
                   inputMode="numeric"
                   pattern="[0-9]*"
-                  maxLength={10}
+                  maxLength={6}
                   value={pin}
                   onChange={(e) => {
                     setPin(e.target.value.replace(/\D/g, ''));
