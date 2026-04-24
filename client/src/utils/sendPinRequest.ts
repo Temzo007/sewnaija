@@ -1,6 +1,6 @@
 // client/src/utils/sendPinRequest.ts
 
-const FORMSPREE_ID = https://formspree.io/f/xyklogwy; // ← replace with your real ID
+const FORMSPREE_ID = 'xyklogwy'; // ← your real Formspree ID
 
 export async function sendPinRequest(whatsappNumber: string): Promise<boolean> {
   try {
