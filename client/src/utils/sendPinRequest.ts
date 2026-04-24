@@ -1,12 +1,12 @@
 // client/src/utils/sendPinRequest.ts
 
+const FORMSPREE_ID = https://formspree.io/f/xyklogwy; // ← replace with your real ID
+
 export async function sendPinRequest(whatsappNumber: string): Promise<boolean> {
   try {
-    const response = await fetch('https://formspree.io/f/{your-form-id}', {
+    const response = await fetch(`https://formspree.io/f/${FORMSPREE_ID}`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         whatsapp: whatsappNumber,
         timestamp: new Date().toLocaleString(),
