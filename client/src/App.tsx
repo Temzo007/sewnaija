@@ -19,6 +19,7 @@ import { useEffect, useState } from "react";
 import Splash from "@/pages/Splash";
 import InstallApp from "@/pages/InstallApp";
 
+
 type AppState = 'install' | 'splash' | 'app';
 
 function Router() {
@@ -42,17 +43,17 @@ function Router() {
     <Switch>
       <Route path="/setup" component={WelcomeSetup} />
       <Route path="/" component={Home} />
-      
+
       <Route path="/customers" component={Customers} />
       <Route path="/customers/:id" component={CustomerDetails} />
       <Route path="/add-customer" component={AddEditCustomer} />
       <Route path="/edit-customer/:id" component={AddEditCustomer} />
-      
+
       <Route path="/orders" component={Orders} />
       <Route path="/orders/:id" component={OrderDetails} />
       <Route path="/add-order" component={AddEditOrder} />
       <Route path="/edit-order/:id" component={AddEditOrder} />
-      
+
       <Route component={NotFound} />
     </Switch>
   );
@@ -61,12 +62,17 @@ function Router() {
 function App() {
   const [appState, setAppState] = useState<AppState>(() => {
     // Check if running as installed PWA (standalone mode)
+
+
+
+
+
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches 
       || (window.navigator as any).standalone === true;
     
     // Check if user has already seen install page this session
     const hasSeenInstall = sessionStorage.getItem('sewnaija_seen_install') === 'true';
-    
+
     if (isStandalone) {
       // Running as installed app - show splash
       return 'splash';
@@ -77,6 +83,7 @@ function App() {
       // First visit in browser - show install page
       return 'install';
     }
+
   });
 
   const handleInstalled = () => {
@@ -88,6 +95,19 @@ function App() {
     setAppState('app');
   };
 
+
+
+
+
+
+
+
+
+
+
+
+
+
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
@@ -95,6 +115,9 @@ function App() {
         {appState === 'install' && (
           <InstallApp onInstalled={handleInstalled} />
         )}
+
+
+
         {appState === 'splash' && (
           <Splash onComplete={handleSplashComplete} />
         )}
