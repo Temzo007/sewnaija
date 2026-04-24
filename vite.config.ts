@@ -6,7 +6,7 @@ import { VitePWA } from "vite-plugin-pwa";
 import { metaImagesPlugin } from "./vite-plugin-meta-images";
 
 export default defineConfig({
-  base: "/",
+  base: "/sewnaija/",
 
   plugins: [
     react(),
@@ -27,7 +27,7 @@ export default defineConfig({
       ],
 
       workbox: {
-        navigateFallback: "/index.html",
+        navigateFallback: "/sewnaija/index.html",
         globPatterns: ["**/*.{js,css,html,ico,png,svg}"]
       }
     }),
@@ -55,4 +55,3 @@ export default defineConfig({
     },
   },
 });
-
