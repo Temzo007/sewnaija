@@ -58,7 +58,7 @@ export default function PinLockScreen({ onUnlock }: PinLockScreenProps) {
                     setError(false);
                   }}
                   className="text-center text-2xl tracking-[0.25em] h-14"
-                  placeholder="••••••••••"
+                  placeholder="••••••"
                   autoFocus
                   disabled={loading}
                 />
