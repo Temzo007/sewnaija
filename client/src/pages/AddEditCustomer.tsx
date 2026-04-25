@@ -197,7 +197,7 @@ export default function AddEditCustomer() {
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="absolute -top-2 -right-2 h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity z-10 bg-destructive/10 hover:bg-destructive/20 text-destructive rounded-full"
+                  className="absolute -top-2 -right-2 h-5 w-5 transition-opacity z-10 bg-destructive/10 hover:bg-destructive/20 text-destructive rounded-full"
                   onClick={() => remove(index)}
                 >
                   <Trash2 className="w-3 h-3" />
