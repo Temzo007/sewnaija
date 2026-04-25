@@ -117,6 +117,7 @@ export default function AddEditCustomer() {
             <input 
               type="file" 
               accept="image/*" 
+              capture="environment"
               className="absolute inset-0 opacity-0 z-10 cursor-pointer" 
               onChange={handlePhotoUpload}
             />
