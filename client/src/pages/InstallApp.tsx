@@ -54,7 +54,7 @@ if (deferredPrompt) {
   }  
 } else {
 
-alert("Install not ready yet. Please wait a moment and try again.");
+alert("Install failed. Please reload this page and try again after a minute.");
 }
 };
 
