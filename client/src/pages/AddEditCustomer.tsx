@@ -193,14 +193,14 @@ export default function AddEditCustomer() {
                 <input type="hidden" {...register(`measurements.${index}.name`)} value={field.name} />
                 
                 {/* Allow removing custom measurements (assuming standard ones are kept or user can remove them too if they want flexibility) */}
-                <Button
+               <Button
   type="button"
   variant="ghost"
   size="icon"
-  className="absolute -top-1.5 -right-1.5 h-4 w-4 z-10 text-muted-foreground hover:text-red-500 transition-colors"
+  className="absolute top-0.5 right-0.5 h-5 w-5 z-10 rounded-full bg-background/80 hover:bg-red-50 text-muted-foreground hover:text-red-500 transition-colors shadow-sm"
   onClick={() => remove(index)}
 >
-  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
     <line x1="18" y1="6" x2="6" y2="18"></line>
     <line x1="6" y1="6" x2="18" y2="18"></line>
   </svg>
