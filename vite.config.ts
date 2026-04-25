@@ -21,7 +21,7 @@ export default defineConfig({
       manifest: false,
 
       includeAssets: [
-        "favicon.ico",
+        "favicon.ico",   
         "icon-192.png",
         "icon-512.png"
       ],
