@@ -1,12 +1,14 @@
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
-import { Home, Users, Package, Sun, Moon, LogOut, Menu } from "lucide-react";
+import { Home, Users, Package, Sun, Moon, LogOut, Menu, Download, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
 import { getTheme, setTheme, getOrders } from "@/lib/db";
 import { useQuery } from "@tanstack/react-query";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
+import { useToast } from "@/hooks/use-toast";
+import { exportSivastyBackup } from "@/lib/backup";
 
 interface SidebarProps {
   open?: boolean;
@@ -16,6 +18,8 @@ interface SidebarProps {
 export function AppSidebar({ open, setOpen }: SidebarProps) {
   const [location] = useLocation();
   const [theme, setThemeState] = useState<'light' | 'dark'>('light');
+  const [exporting, setExporting] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     getTheme().then(setThemeState);
@@ -25,6 +29,26 @@ export function AppSidebar({ open, setOpen }: SidebarProps) {
     const newTheme = theme === 'light' ? 'dark' : 'light';
     setThemeState(newTheme);
     setTheme(newTheme);
+  };
+
+  const handleExportForSivasty = async () => {
+    if (exporting) return;
+    setExporting(true);
+    try {
+      const summary = await exportSivastyBackup();
+      toast({
+        title: "Backup exported",
+        description: `${summary.customers} customers and ${summary.orders} orders saved. Restore it in the SIVASTY app via "Restore backup".`,
+      });
+    } catch {
+      toast({
+        title: "Export failed",
+        description: "The backup could not be created. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setExporting(false);
+    }
   };
 
   // Get orders count for badges
@@ -112,15 +136,27 @@ export function AppSidebar({ open, setOpen }: SidebarProps) {
 
       </div>
 
-      <div className="p-4 border-t border-sidebar-border">
-        <Button 
-          variant="ghost" 
+      <div className="p-4 border-t border-sidebar-border space-y-1">
+        <Button
+          variant="ghost"
           className="w-full justify-start gap-3 text-muted-foreground hover:text-foreground"
           onClick={toggleTheme}
         >
           {theme === 'light' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
           <span>{theme === 'light' ? 'Dark Mode' : 'Light Mode'}</span>
         </Button>
+        <Button
+          variant="ghost"
+          className="w-full justify-start gap-3 text-muted-foreground hover:text-foreground"
+          onClick={handleExportForSivasty}
+          disabled={exporting}
+        >
+          {exporting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Download className="w-5 h-5" />}
+          <span>{exporting ? 'Preparing backup…' : 'Export for SIVASTY'}</span>
+        </Button>
+        <p className="px-4 pt-1 text-[11px] leading-snug text-muted-foreground/70">
+          Saves customers, orders and photos as a backup file you can restore in the new SIVASTY app.
+        </p>
       </div>
     </div>
   );
