@@ -19,6 +19,7 @@ export function AppSidebar({ open, setOpen }: SidebarProps) {
   const [location] = useLocation();
   const [theme, setThemeState] = useState<'light' | 'dark'>('light');
   const [exporting, setExporting] = useState(false);
+  const [exportProgress, setExportProgress] = useState('');
   const { toast } = useToast();
 
   useEffect(() => {
@@ -34,8 +35,11 @@ export function AppSidebar({ open, setOpen }: SidebarProps) {
   const handleExportForSivasty = async () => {
     if (exporting) return;
     setExporting(true);
+    setExportProgress('');
     try {
-      const summary = await exportSivastyBackup();
+      const summary = await exportSivastyBackup((doneCount, totalCount) => {
+        setExportProgress(totalCount > 0 ? `Preparing backup… ${doneCount}/${totalCount}` : 'Preparing backup…');
+      });
       toast({
         title: "Backup exported",
         description: `${summary.customers} customers and ${summary.orders} orders saved. Restore it in the SIVASTY app via "Restore backup".`,
@@ -152,7 +156,7 @@ export function AppSidebar({ open, setOpen }: SidebarProps) {
           disabled={exporting}
         >
           {exporting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Download className="w-5 h-5" />}
-          <span>{exporting ? 'Preparing backup…' : 'Export for SIVASTY'}</span>
+          <span>{exporting ? (exportProgress || 'Preparing backup…') : 'Export for SIVASTY'}</span>
         </Button>
         <p className="px-4 pt-1 text-[11px] leading-snug text-muted-foreground/70">
           Saves customers, orders and photos as a backup file you can restore in the new SIVASTY app.
