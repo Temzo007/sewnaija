@@ -140,6 +140,53 @@ export const getOrders = async (): Promise<Order[]> => {
   });
 };
 
+// Cursor-based iteration keeps only one raw record in memory at a time,
+// which matters for exports where every record can carry photo data URLs.
+const iterateStore = <T>(
+  storeName: 'customers' | 'orders',
+  callback: (value: T) => void | Promise<void>,
+): Promise<void> => {
+  return openDB().then((db) => {
+    const transaction = db.transaction([storeName], 'readonly');
+    const store = transaction.objectStore(storeName);
+    return new Promise<void>((resolve, reject) => {
+      let pending: Promise<void> = Promise.resolve();
+      const request = store.openCursor();
+      request.onsuccess = () => {
+        const cursor = request.result;
+        if (!cursor) {
+          pending.then(resolve, reject);
+          return;
+        }
+        const value = cursor.value as T;
+        pending = pending.then(() => Promise.resolve(callback(value))).catch(reject);
+        cursor.continue();
+      };
+      request.onerror = () => reject(request.error);
+      transaction.onabort = () => reject(transaction.error || new Error('Transaction aborted'));
+    });
+  });
+};
+
+export const iterateCustomers = (callback: (customer: Customer) => void | Promise<void>): Promise<void> =>
+  iterateStore<Customer>('customers', callback);
+
+export const iterateOrders = (callback: (order: Order) => void | Promise<void>): Promise<void> =>
+  iterateStore<Order>('orders', callback);
+
+const countStore = async (storeName: 'customers' | 'orders'): Promise<number> => {
+  const db = await openDB();
+  const transaction = db.transaction([storeName], 'readonly');
+  const store = transaction.objectStore(storeName);
+  return new Promise((resolve) => {
+    const request = store.count();
+    request.onsuccess = () => resolve(request.result);
+  });
+};
+
+export const countCustomers = (): Promise<number> => countStore('customers');
+export const countOrders = (): Promise<number> => countStore('orders');
+
 export const getOrder = async (id: string): Promise<Order | undefined> => {
   const db = await openDB();
   const transaction = db.transaction(['orders'], 'readonly');
